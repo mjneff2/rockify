@@ -23,19 +23,26 @@ class APIWrapper:
         print(track_count)
         print(len(playlists))
             
-    def get_songs_from_playlist(self, playlist):
+    def get_artists_from_playlist(self, playlist):
         results = self.spotify.playlist_tracks(playlist['id'])
         #print(results)
         tracks = results['items']
         while results['next']:
             results = self.spotify.next(results)
             tracks.extend(results['items'])
+        artists = set()
         for track in tracks:
             print(track['track']['name'], end="")
             for artist in track['track']['artists']:
                 print(" - ", artist['name'], end="")
             print()
         return len(tracks)
+
+    def get_top_albums_from_artist(self, artist):
+        pass
+
+    def get_tracks_from_album(self, album):
+        pass
         
 
 if __name__ == "__main__":
