@@ -7,7 +7,9 @@ Popularity INT,
 PreviewURL VARCHAR(255), 
 ReleaseDate DATE, 
 Duration INT,
-PRIMARY KEY(TrackId)
+AlbumId VARCHAR(255),
+PRIMARY KEY (TrackId)
+FOREIGN KEY (AlbumId) REFERENCES Album(AlbumId)
 );
 
 
@@ -23,19 +25,22 @@ Liveness REAL,
 Valence REAL, 
 Tempo REAL,
 PRIMARY KEY(TrackId)
+FOREIGN KEY(TrackId) REFERENCES Track(TrackId)
 );
 
 
 CREATE TABLE TrackArtist(
-TrackId VARCHAR(255) [PK], 
+TrackId VARCHAR(255), 
 ArtistId VARCHAR(255) [FK to Artist.ArtistId], 
-IsFeature BOOLEAN
-PRIMARY KEY(TrackId, ArtistId)
+IsFeature BOOLEAN,
+PRIMARY KEY(TrackId, ArtistId),
+FOREIGN KEY(TrackId) REFERENCES Track(TrackId),
+FOREIGN KEY (ArtistId) REFERENCES Artist(ArtistId)
 );
 
 
 CREATE TABLE Artist(
-ArtistId VARCHAR(255) [PK], 
+ArtistId VARCHAR(255), 
 ArtistName, VARCHAR(255), 
 ImageUrl, VARCHAR(255), 
 Genre VARCHAR(255), 
