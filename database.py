@@ -1,10 +1,11 @@
 import sqlalchemy
 class Database:
-    def __init__(self):
+    def __init__(self, db):
         self.track_calls = 0
         self.artist_calls = 0
         self.album_calls = 0
         self.track_feature_calls = 0
+        self.db = db
 
     def insert_track(self, track):
         if track is None:

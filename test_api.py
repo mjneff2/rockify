@@ -9,9 +9,9 @@ import database
 logger = logging.getLogger(__name__)
 
 class APIWrapper:
-    def __init__(self):
+    def __init__(self, db):
         self.spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=config.client_id, client_secret=config.client_secret))
-        self.db = database.Database()
+        self.db = db
 
     def get_playlists_from_rock(self):
         results = self.spotify.category_playlists(category_id="rock", limit=50)['playlists']
