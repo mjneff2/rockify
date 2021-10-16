@@ -12,13 +12,25 @@ class Database:
             return
         TrackId = track['id']
         TrackName = track['name']
-        mageURL = track['album']['images'][0]['url']
+        ImageURL = track['album']['images'][0]['url']
         Genre = "rock"
         Popularity = track['popularity']
         PreviewURL = track['preview_url']
         ReleaseDate = track['album']['release_date']
         Duration = track['duration_ms']
         self.track_calls += 1
+        try:
+            stmt = sqlalchemy.text("""INSERT INTO Track (TrackId, TrackName,
+                                   ImageURL, Genre, Popularity, PreviewURL, 
+                                   ReleaseDate, Duration""" """ VALUES (:TrackId,
+                                   :TrackName, :ImageURL, :Genre, :Popularity
+                                   :PreviewURL, :ReleaseDate, :Duration)""")
+            with self.db.connect() as conn:
+                conn.execute(stmt, TrackId=TrackId, TrackName=TrackName, ImageURL=ImageURL,
+                             Genre=Genre, Popularity=Popularity, PreviewURL=PreviewURL,
+                             ReleaseDate=ReleaseDate, Duration=Duration)
+        except Exception:
+            print("Error in inserting Track")
         pass
 
     def insert_artist(self, artist):
@@ -30,6 +42,15 @@ class Database:
         Genre = "rock"
         Popularity = 0
         self.artist_calls += 1
+        try:
+            stmt = sqlalchemy.text("""INSERT INTO Artist (ArtistId, ArtistName,
+                                   ImageURL, Genre, Popularity""" """ VALUES (:ArtistId,
+                                   :ArtistName, :ImageURL, :Genre, :Popularity)""")
+            with self.db.connect() as conn:
+                conn.execute(stmt, ArtistId=ArtistId, ArtistName=ArtistName, ImageURL=ImageURL,
+                             Genre=Genre, Popularity=Popularity)
+        except Exception:
+            print("Error in inserting Artist")
         pass
 
     def insert_album(self, album):
@@ -42,6 +63,16 @@ class Database:
         Popularity = 0
         ReleaseDate = album['release_date']  
         self.album_calls += 1
+        try:
+            stmt = sqlalchemy.text("""INSERT INTO Album (AlbumId, AlbumName,
+                                   ImageURL, Genre, Popularity, ReleaseDate"""
+                                   """ VALUES (:AlbumId, :AlbumName, :ImageURL, 
+                                   :Genre, :Popularity, :ReleaseDate)""")
+            with self.db.connect() as conn:
+                conn.execute(stmt, AlbumId=AlbumId, AlbumName=AlbumName, ImageURL=ImageURL,
+                             Genre=Genre, Popularity=Popularity, ReleaseDate=ReleaseDate)
+        except Exception:
+            print("Error in inserting Album")
         pass
 
     def insert_track_properties(self, track_properties):
@@ -58,4 +89,20 @@ class Database:
         Valence = track_properties['valence']
         Tempo = track_properties['tempo']
         self.track_feature_calls += 1
+        try:
+            stmt = sqlalchemy.text("""INSERT INTO TrackProperties (TrackId, 
+                                   Danceability, Energy, Loudness, Speechiness,
+                                   Acousticness, Instrumentalness, Liveness,
+                                   Valence, Tempo"""
+                                   """ VALUES (:TrackId, :Danceability, :Energy,
+                                   :Loudness, :Speechiness, :Acousticness,
+                                   :Instrumentalness, :Liveness, :Valence
+                                   :Tempo)""")
+            with self.db.connect() as conn:
+                conn.execute(stmt, TrackId=TrackId, Danceability=Danceability,
+                             Energy=Energy, Loudness=Loudness, Speechiness=Speechiness,
+                             Acousticness=Acousticness, Instrumentalness=Instrumentalness,
+                             Liveness=Liveness, Valence=Valence, Tempo=Tempo)
+        except Exception:
+            print("Error in inserting Track Properties")
         pass
