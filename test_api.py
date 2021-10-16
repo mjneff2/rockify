@@ -29,12 +29,17 @@ class APIWrapper:
             results = self.spotify.next(results)
             if results['items']:
                 tracks.extend(results['items'])
-        artists = []
+        simple_artists = []
         for track in tracks:
             if track:
-                for artist in track['track']['artists']:
-                    artists.append(artist)
-        return artists
+                track = track['track']
+                if track:
+                    artists = track['artists']
+                    if artists:
+                        for artist in artists:
+                            if artist:
+                                simple_artists.append(artist)
+        return simple_artists
 
     def get_full_artists_from_artists(self, artists):
         ids = [artist['id'] for artist in artists]
@@ -83,27 +88,27 @@ class APIWrapper:
 
     def fill_database(self):
         playlists = self.get_playlists_from_rock()
-        #print("Playlists:", len(playlists))
+        logger.error(f"Playlists: {len(playlists)}")
         simple_artists = []
         for playlist in playlists:
             simple_artists.extend(self.get_artists_from_playlist(playlist))
         full_artists = self.get_full_artists_from_artists(simple_artists)
-        #print("Artists:", len(full_artists))
+        logger.error(f"Artists: {len(full_artists)}")
         for artist in full_artists:
             self.db.insert_artist(artist)
             albums = self.get_top_albums_from_artist(artist)
-            #print("Albums:", len(albums))
+            logger.error(f"Albums: {len(albums)}")
             for album in albums:
                 self.db.insert_album(album)
                 simple_tracks = self.get_tracks_from_album(album)
                 full_tracks = self.get_full_tracks_from_tracks(simple_tracks)
-                #print("Tracks:", len(full_tracks))
+                logger.error(f"Tracks: {len(full_tracks)}")
                 for track in full_tracks:
                     self.db.insert_track(track)
                 track_features_list = self.get_track_features_from_tracks(full_tracks)
                 for track_features in track_features_list:
                     self.db.insert_track_properties(track_features)
-        print(self.db.track_feature_calls, self.db.track_calls, self.db.artist_calls, self.db.album_calls)
+        logger.error(f"{self.db.track_feature_calls}, {self.db.track_calls}, {self.db.artist_calls}, {self.db.album_calls}")
         
 
 if __name__ == "__main__":

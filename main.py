@@ -1,4 +1,5 @@
 import os
+from test_api import APIWrapper
 
 from flask import Flask
 
@@ -8,6 +9,8 @@ app = Flask(__name__)
 @app.route("/")
 def hello_world():
     name = os.environ.get("NAME", "World")
+    api = APIWrapper()
+    api.fill_database()
     return "Hello {}!".format(name)
 
 
