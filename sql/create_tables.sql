@@ -8,7 +8,7 @@ PreviewURL VARCHAR(255),
 ReleaseDate DATE, 
 Duration INT,
 AlbumId VARCHAR(255),
-PRIMARY KEY (TrackId)
+PRIMARY KEY (TrackId),
 FOREIGN KEY (AlbumId) REFERENCES Album(AlbumId)
 );
 
@@ -24,7 +24,7 @@ Instrumentalness REAL,
 Liveness REAL, 
 Valence REAL, 
 Tempo REAL,
-PRIMARY KEY(TrackId)
+PRIMARY KEY(TrackId),
 FOREIGN KEY(TrackId) REFERENCES Track(TrackId)
 );
 
@@ -41,10 +41,10 @@ FOREIGN KEY (ArtistId) REFERENCES Artist(ArtistId)
 
 CREATE TABLE Artist(
 ArtistId VARCHAR(255), 
-ArtistName, VARCHAR(255), 
-ImageUrl, VARCHAR(255), 
+ArtistName VARCHAR(255), 
+ImageUrl VARCHAR(255), 
 Genre VARCHAR(255), 
-Popularity INT
+Popularity INT,
 PRIMARY KEY(ArtistId)
 );
 
@@ -60,5 +60,5 @@ AlbumName VARCHAR(255),
 ImageUrl VARCHAR(255), 
 Genre VARCHAR(255), 
 Popularity INT, 
-ReleaseDate Character(Display Format: YYYY-MM-DDTHH:MM:SSZ)
+ReleaseDate DATE
 );
