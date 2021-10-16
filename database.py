@@ -18,20 +18,16 @@ class Database:
         PreviewURL = track['preview_url']
         ReleaseDate = track['album']['release_date']
         Duration = track['duration_ms']
+        AlbumId = track['album']['id']
         self.track_calls += 1
         try:
-            stmt = sqlalchemy.text("""INSERT INTO Track (TrackId, TrackName,
-                                   ImageURL, Genre, Popularity, PreviewURL, 
-                                   ReleaseDate, Duration""" """ VALUES (:TrackId,
-                                   :TrackName, :ImageURL, :Genre, :Popularity
-                                   :PreviewURL, :ReleaseDate, :Duration)""")
+            stmt = sqlalchemy.text("INSERT INTO Track (TrackId, TrackName, ImageURL, Genre, Popularity, PreviewURL, ReleaseDate, Duration, AlbumId)" " VALUES (:TrackId, :TrackName, :ImageURL, :Genre, :Popularity, :PreviewURL, :ReleaseDate, :Duration, :AlbumId)")
             with self.db.connect() as conn:
                 conn.execute(stmt, TrackId=TrackId, TrackName=TrackName, ImageURL=ImageURL,
                              Genre=Genre, Popularity=Popularity, PreviewURL=PreviewURL,
-                             ReleaseDate=ReleaseDate, Duration=Duration)
-        except Exception:
-            print("Error in inserting Track")
-        pass
+                             ReleaseDate=ReleaseDate, Duration=Duration, AlbumId=AlbumId)
+        except Exception as e:
+            print(e)
 
     def insert_artist(self, artist):
         if artist is None:
@@ -43,15 +39,12 @@ class Database:
         Popularity = 0
         self.artist_calls += 1
         try:
-            stmt = sqlalchemy.text("""INSERT INTO Artist (ArtistId, ArtistName,
-                                   ImageURL, Genre, Popularity""" """ VALUES (:ArtistId,
-                                   :ArtistName, :ImageURL, :Genre, :Popularity)""")
+            stmt = sqlalchemy.text("INSERT INTO Artist (ArtistId, ArtistName, ImageURL, Genre, Popularity)" " VALUES (:ArtistId, :ArtistName, :ImageURL, :Genre, :Popularity)")
             with self.db.connect() as conn:
                 conn.execute(stmt, ArtistId=ArtistId, ArtistName=ArtistName, ImageURL=ImageURL,
                              Genre=Genre, Popularity=Popularity)
-        except Exception:
-            print("Error in inserting Artist")
-        pass
+        except Exception as e:
+            print(e)
 
     def insert_album(self, album):
         if album is None:
@@ -62,18 +55,15 @@ class Database:
         Genre = "rock"
         Popularity = 0
         ReleaseDate = album['release_date']  
+        ArtistId = album['artist_id']
         self.album_calls += 1
         try:
-            stmt = sqlalchemy.text("""INSERT INTO Album (AlbumId, AlbumName,
-                                   ImageURL, Genre, Popularity, ReleaseDate"""
-                                   """ VALUES (:AlbumId, :AlbumName, :ImageURL, 
-                                   :Genre, :Popularity, :ReleaseDate)""")
+            stmt = sqlalchemy.text("INSERT INTO Album (AlbumId, AlbumName, ImageURL, Genre, Popularity, ReleaseDate, ArtistId)" " VALUES (:AlbumId, :AlbumName, :ImageURL, :Genre, :Popularity, :ReleaseDate, :ArtistId)")
             with self.db.connect() as conn:
                 conn.execute(stmt, AlbumId=AlbumId, AlbumName=AlbumName, ImageURL=ImageURL,
-                             Genre=Genre, Popularity=Popularity, ReleaseDate=ReleaseDate)
-        except Exception:
-            print("Error in inserting Album")
-        pass
+                             Genre=Genre, Popularity=Popularity, ReleaseDate=ReleaseDate, ArtistId=ArtistId)
+        except Exception as e:
+            print(e)
 
     def insert_track_properties(self, track_properties):
         if track_properties is None:
@@ -90,19 +80,11 @@ class Database:
         Tempo = track_properties['tempo']
         self.track_feature_calls += 1
         try:
-            stmt = sqlalchemy.text("""INSERT INTO TrackProperties (TrackId, 
-                                   Danceability, Energy, Loudness, Speechiness,
-                                   Acousticness, Instrumentalness, Liveness,
-                                   Valence, Tempo"""
-                                   """ VALUES (:TrackId, :Danceability, :Energy,
-                                   :Loudness, :Speechiness, :Acousticness,
-                                   :Instrumentalness, :Liveness, :Valence
-                                   :Tempo)""")
+            stmt = sqlalchemy.text("INSERT INTO TrackProperties (TrackId, Danceability, Energy, Loudness, Speechiness, Acousticness, Instrumentalness, Liveness, Valence, Tempo)" " VALUES (:TrackId, :Danceability, :Energy, :Loudness, :Speechiness, :Acousticness, :Instrumentalness, :Liveness, :Valence, :Tempo)")
             with self.db.connect() as conn:
                 conn.execute(stmt, TrackId=TrackId, Danceability=Danceability,
                              Energy=Energy, Loudness=Loudness, Speechiness=Speechiness,
                              Acousticness=Acousticness, Instrumentalness=Instrumentalness,
                              Liveness=Liveness, Valence=Valence, Tempo=Tempo)
-        except Exception:
-            print("Error in inserting Track Properties")
-        pass
+        except Exception as e:
+            print(e)

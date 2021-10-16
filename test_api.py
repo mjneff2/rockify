@@ -2,7 +2,7 @@ from typing import Any, List, Dict
 import spotipy
 from spotipy.client import Spotify
 from spotipy.oauth2 import SpotifyClientCredentials
-import config
+import config_data
 import logging
 import database
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class APIWrapper:
     def __init__(self, db):
-        self.spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=config.client_id, client_secret=config.client_secret))
+        self.spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=config_data.client_id, client_secret=config_data.client_secret))
         self.db = db
 
     def get_playlists_from_rock(self):
@@ -99,6 +99,7 @@ class APIWrapper:
             albums = self.get_top_albums_from_artist(artist)
             logger.error(f"Albums: {len(albums)}")
             for album in albums:
+                album['artist_id'] = artist['id']
                 self.db.insert_album(album)
                 simple_tracks = self.get_tracks_from_album(album)
                 full_tracks = self.get_full_tracks_from_tracks(simple_tracks)
