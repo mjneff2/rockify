@@ -26,6 +26,11 @@ class Database:
                 conn.execute(stmt, TrackId=TrackId, TrackName=TrackName, ImageURL=ImageURL,
                              Genre=Genre, Popularity=Popularity, PreviewURL=PreviewURL,
                              ReleaseDate=ReleaseDate, Duration=Duration, AlbumId=AlbumId)
+            for artist in track['artists']:
+                ArtistId = artist['id']
+                stmt2 = sqlalchemy.text("INSERT INTO TrackArtist (TrackId, ArtistId)" " VALUES (:TrackId, :ArtistId)")
+                with self.db.connect() as conn:
+                    conn.execute(stmt2, TrackId=TrackId, ArtistId=ArtistId)  
         except Exception as e:
             print(e)
 

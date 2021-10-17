@@ -191,16 +191,25 @@ db = None
 
 
 @app.before_first_request
-def create_tables():
+def init_database():
     global db
     db = db or init_connection_engine()
-    
+
 @app.route("/")
 def hello_world():
+    return "Hello world!"
+    
+@app.route("/fill_database")
+def fill_database():
     api = APIWrapper(Database(db))
     api.fill_database()
-    return "Hello world!"
+    return "Filled database."
 
+@app.route("/artist/<artist>")
+def fill_artist(artist):
+    api = APIWrapper(Database(db))
+    api.fill_for_artist_by_search(escape(artist))
+    return f"Filled for artist {escape(artist)}"
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080, debug=True)

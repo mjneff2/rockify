@@ -55,7 +55,7 @@ class APIWrapper:
         return list(set(input))
 
     def get_top_albums_from_artist(self, artist):
-        results = self.spotify.artist_albums(artist['id'])
+        results = self.spotify.artist_albums(artist['id'], limit=50)
         albums = results['items']
         return albums
             
@@ -110,8 +110,27 @@ class APIWrapper:
                 for track_features in track_features_list:
                     self.db.insert_track_properties(track_features)
         logger.error(f"{self.db.track_feature_calls}, {self.db.track_calls}, {self.db.artist_calls}, {self.db.album_calls}")
-        
 
-if __name__ == "__main__":
-    api = APIWrapper()
-    api.fill_database()
+    def fill_for_artist_by_search(self, artist):
+        query = artist.replace(" ", "+")
+        result = self.spotify.search(q=query, type='artist', limit=1)
+        print(result)
+        full_artists = self.get_full_artists_from_artists(result['artists']['items'])
+        logger.error(f"Artists: {len(full_artists)}")
+        print(full_artists)
+        for artist in full_artists:
+            self.db.insert_artist(artist)
+            albums = self.get_top_albums_from_artist(artist)
+            logger.error(f"Albums: {len(albums)}")
+            for album in albums:
+                album['artist_id'] = artist['id']
+                self.db.insert_album(album)
+                simple_tracks = self.get_tracks_from_album(album)
+                full_tracks = self.get_full_tracks_from_tracks(simple_tracks)
+                logger.error(f"Tracks: {len(full_tracks)}")
+                for track in full_tracks:
+                    self.db.insert_track(track)
+                track_features_list = self.get_track_features_from_tracks(full_tracks)
+                for track_features in track_features_list:
+                    self.db.insert_track_properties(track_features)
+        logger.error(f"{self.db.track_feature_calls}, {self.db.track_calls}, {self.db.artist_calls}, {self.db.album_calls}")
