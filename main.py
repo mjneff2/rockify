@@ -258,5 +258,15 @@ def get_tracks():
     data = request.args
     return api.get_tracks_by_attributes(data)
 
+@app.route("/api/getTracksWithPopularity")
+def get_tracks_with_popularity():
+    global api
+    return jsonify(api.get_tracks_with_popularity(request.args))
+
+@app.route("/api/getAlbumsWithTempo")
+def get_albums_with_tempo():
+    global api
+    return jsonify(api.get_albums_with_tempo(request.args))
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080, debug=True)

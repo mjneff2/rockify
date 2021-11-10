@@ -147,3 +147,11 @@ class APIWrapper:
 
     def update_user_like(self, data):
         return self.db.update_user_like(data['favorite'], data['userName'], self.db.get_artist_by_name(data['artist'])['ArtistId'])
+
+    def get_tracks_with_popularity(self, data):
+        logger.error(data)
+        return self.db.get_tracks_by_popularity_and_artist_popularity(data['artistPopularityRating'], data['trackPopularityRating'])
+
+    def get_albums_with_tempo(self, data):
+        logger.error(data)
+        return self.db.get_albums_by_average_tempo(data['tempo'])

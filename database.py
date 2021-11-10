@@ -205,11 +205,12 @@ class Database:
         except Exception as e:
             print("delete_artist_by_id")
         return False
+
     def get_tracks_by_popularity_and_artist_popularity(self, artistPopularityRating, trackPopularityRating):
         if artistPopularityRating is None or trackPopularityRating is None:
             return
         try:
-            stmt = sqlalchemy.text("SELECT Track.TrackName, Artist.ArtistName From Track JOIN Album ON Track.AlbumId = Album.AlbumId JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Track.Popularity > trackPopularityToAdd AND Artist.Popularity > artistPopularityToAdd")
+            stmt = sqlalchemy.text("SELECT Track.TrackName, Artist.ArtistName From Track JOIN Album ON Track.AlbumId = Album.AlbumId JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Track.Popularity > trackPopularityToAdd AND Artist.Popularity > :artistPopularityToAdd")
             with self.db.connect() as conn:
                 output = conn.execute(stmt, trackPopularityToAdd=trackPopularityRating, artistPopularityToAdd=artistPopularityRating)
                 # Build dict result with attributes of album
@@ -229,12 +230,12 @@ class Database:
         if tempo is None:
             return
         try:
-            stmt = sqlalchemy.text("SELECT Album.AlbumName From Album JOIN Track ON Album.AlbumId = Track.AlbumId JOIN TrackProperties ON Track.TrackId = TrackProperties.TrackId GROUP BY AlbumId HAVING TrackProperties.Tempo > tempoToAdd")
+            stmt = sqlalchemy.text("SELECT Album.AlbumName, ROUND(AVG(Track.Tempo)) AS avgTempo From Album JOIN Track ON Album.AlbumId = Track.AlbumId JOIN TrackProperties ON Track.TrackId = TrackProperties.TrackId GROUP BY AlbumId HAVING avgTempo > :tempoToAdd")
             with self.db.connect() as conn:
                 output = conn.execute(stmt, tempoToAdd=tempo)
                 # Build dict result with attributes of album
             result = []
-            columns = ["AlbumName"]
+            columns = ["AlbumName, "]
             for row in output:
                 albumDict = {}
                 for i, column in enumerate(columns):
