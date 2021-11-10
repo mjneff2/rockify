@@ -43,7 +43,7 @@ class Database:
         ArtistName = artist['name']
         ImageURL = "blank"
         Genre = "rock"
-        Popularity = 0
+        Popularity = artist['popularity']
         self.artist_calls += 1
         try:
             stmt = sqlalchemy.text("INSERT INTO Artist (ArtistId, ArtistName, ImageURL, Genre, Popularity)" " VALUES (:ArtistId, :ArtistName, :ImageURL, :Genre, :Popularity)")
@@ -197,7 +197,7 @@ class Database:
         if artist_id is None:
             return
         try:
-            stmt = sqlalchemy.text("DELETE From Artist WHERE ArtistId = :IdToDelete")
+            stmt = sqlalchemy.text("DELETE From Artist WHERE ArtistId = :IdToDelete LIMIT 1")
             with self.db.connect() as conn:
                 result = conn.execute(stmt, IdToDelete=artist_id)
                 if result.rowcount > 0:
