@@ -1,4 +1,6 @@
 import sqlalchemy
+from typing import Any, Dict
+
 class Database:
     def __init__(self, db):
         self.track_calls = 0
@@ -106,20 +108,20 @@ class Database:
     def get_tracks_with_features_by_name(self, track_name):
         pass
 
-    def get_artist_by_name(self, artist_name):
+    def get_artist_by_name(self, artist_name: str) -> Dict[str, Any]:
         pass
 
-    def get_albums_by_data(self, attributes):
+    def get_albums_by_attributes(self, attributes: Dict[str, Any]) -> Dict[str, Any]:
         # attributes will have artist required, optional yearfrom, yearto, optional popularity rating, optional duration
         pass
 
     def delete_track_by_id(self, track_id):
         pass
 
-    def delete_album_by_id(self, track_id):
+    def delete_album_by_id(self, album_id):
         pass
 
-    def delete_artist_by_id(self, track_id):
+    def delete_artist_by_id(self, artist_id: str) -> bool:
         pass
     
 

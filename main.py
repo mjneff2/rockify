@@ -236,7 +236,8 @@ def insert_artist():
 
 @app.route("/api/get")
 def get_albums():
-    data = request.form
+    data = request.args
+    return api.get_albums_by_attributes(data)
 
 
 

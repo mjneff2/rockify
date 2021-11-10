@@ -4,12 +4,12 @@ from spotipy.client import Spotify
 from spotipy.oauth2 import SpotifyClientCredentials
 import config_data
 import logging
-import database
+from database import Database
 
 logger = logging.getLogger(__name__)
 
 class APIWrapper:
-    def __init__(self, db):
+    def __init__(self, db: Database):
         self.spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=config_data.client_id, client_secret=config_data.client_secret))
         self.db = db
 
@@ -136,4 +136,8 @@ class APIWrapper:
         logger.error(f"{self.db.track_feature_calls}, {self.db.track_calls}, {self.db.artist_calls}, {self.db.album_calls}")
 
     def delete_artist_by_name(self, artist_name):
-        self.db.
+        artist = self.db.get_artist_by_name(artist_name)
+        return self.db.delete_artist_by_id(artist['id'])
+
+    def get_albums_by_attributes(self, data):
+        return self.db.get_albums_by_data(data)
