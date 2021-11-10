@@ -97,23 +97,69 @@ class Database:
             print(e)
 
     def get_track_by_id(self, track_id):
-        pass
+        if track_id is None:
+            return
+        try:
+            stmt = sqlalchemy.text("SELECT * FROM Track WHERE TrackId = TrackId")
+            with self.db.connect() as conn:
+                conn.execute(stmt, TrackId=track_id)
+        except Exception as e:
+            print("get_track_by_id")
 
     def get_track_with_features_by_id(self, track_id):
         pass
 
     def get_tracks_by_name(self, track_name):
-        pass
+        if track_name is None:
+            return
+        try:
+            stmt = sqlalchemy.text("SELECT * FROM Track WHERE TrackName = TrackName")
+            with self.db.connect() as conn:
+                conn.execute(stmt, TrackName=track_name)
+        except Exception as e:
+            print("get_tracks_by_name")
 
     def get_tracks_with_features_by_name(self, track_name):
         pass
 
     def get_artist_by_name(self, artist_name: str) -> Dict[str, Any]:
-        pass
+        if artist_name is None:
+            return
+        try:
+            stmt = sqlalchemy.text("SELECT * FROM Artist WHERE LOWER(ArtistName) LIKE '%" + str(artist_name).lower() + "%' ORDER BY Popularity DESC")
+            with self.db.connect() as conn:
+                conn.execute(stmt)
+            result = {}
+
+            # Build resulting dict with attributes of artist
+            for key in stmt[0].keys():
+                result[key] = stmt[0][key]
+            return result
+        except Exception as e:
+            print("get_artist_by_name")
 
     def get_albums_by_attributes(self, attributes: Dict[str, Any]) -> Dict[str, Any]:
         # attributes will have artist required, optional yearfrom, yearto, optional popularity rating, optional duration
-        pass
+        if attributes is None:
+            return
+        try:
+            # Build query based on given attributes durationFrom durationTO
+            query = "SELECT * FROM Album WHERE LOWER(ArtistName) LIKE '%" + str(attributes['artist']).lower() + "%' AND ReleaseDate BETWEEN " + str(attributes['yearFrom']) + " AND " + str(attributes['yearTo']) + " AND Popularity >= " + str(attributes['popularityRating'])
+            stmt = sqlalchemy.text(query)
+            with self.db.connect() as conn:
+                conn.execute(stmt)
+            
+            # Build dict result with attributes of album
+            result = []
+            for row in stmt:
+                albumDict = {}
+                for key in row.keys():
+                    albumDict[key] = row[key]
+                result.append(albumDict)
+            return result
+        except Exception as e:
+            print("get_albums_by_attributes")
+        
 
     def delete_track_by_id(self, track_id):
         pass
@@ -122,6 +168,11 @@ class Database:
         pass
 
     def delete_artist_by_id(self, artist_id: str) -> bool:
-        pass
-    
-
+        if artist_id is None:
+            return
+        try:
+            stmt = sqlalchemy.text("DELETE From Artist WHERE ArtistId = ArtistId")
+            with self.db.connect() as conn:
+                conn.execute(stmt, ArtistId=artist_id)
+        except Exception as e:
+            print("delete_artist_by_id")
