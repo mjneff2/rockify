@@ -209,7 +209,7 @@ class Database:
         if artistPopularityRating is None or trackPopularityRating is None:
             return
         try:
-            stmt = sqlalchemy.text("SELECT * FROM Tracks t WHERE EXISTS (SELECT * FROM Artist a JOIN TrackArtist ta ON a.ArtistId = ta.ArtistId WHERE t.TrackId = ta.TrackId AND t.Popularity > :trackPopularityToAdd AND a.Popularity > :artistPopularityToAdd) ORDER BY t.TrackName DESC;")
+            stmt = sqlalchemy.text("SELECT * FROM Tracks t WHERE EXISTS (SELECT * FROM Artist a JOIN TrackArtist ta ON a.ArtistId = ta.ArtistId WHERE t.TrackId = ta.TrackId AND t.Popularity > :trackPopularityToAdd AND a.Popularity > :artistPopularityToAdd) ORDER BY t.TrackName DESC LIMIT 10")
             with self.db.connect() as conn:
                 output = conn.execute(stmt, trackPopularityToAdd=trackPopularityRating, artistPopularityToAdd=artistPopularityRating)
                 # Build dict result with attributes of album
@@ -229,7 +229,7 @@ class Database:
         if tempo is None:
             return
         try:
-            stmt = sqlalchemy.text("SELECT al.AlbumName, ROUND(AVG(tp.Tempo)) AS avgTrackPopularity FROM Album al JOIN Track t ON al.AlbumId = t.AlbumId JOIN TrackProperties tp ON t.TrackId = tp.TrackId GROUP BY al.AlbumName HAVING avgTrackPopularity > :tempoToAdd ORDER BY avgTrackPopularity DESC;")
+            stmt = sqlalchemy.text("SELECT al.AlbumName, ROUND(AVG(tp.Tempo)) AS avgTrackPopularity FROM Album al JOIN Track t ON al.AlbumId = t.AlbumId JOIN TrackProperties tp ON t.TrackId = tp.TrackId GROUP BY al.AlbumName HAVING avgTrackPopularity > :tempoToAdd ORDER BY avgTrackPopularity DESC LIMIT 10")
             with self.db.connect() as conn:
                 output = conn.execute(stmt, tempoToAdd=tempo)
                 # Build dict result with attributes of album
