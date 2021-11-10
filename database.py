@@ -43,7 +43,7 @@ class Database:
         ArtistName = artist['name']
         ImageURL = "blank"
         Genre = "rock"
-        Popularity = artist['popularity']
+        Popularity = 0
         self.artist_calls += 1
         try:
             stmt = sqlalchemy.text("INSERT INTO Artist (ArtistId, ArtistName, ImageURL, Genre, Popularity)" " VALUES (:ArtistId, :ArtistName, :ImageURL, :Genre, :Popularity)")
@@ -197,7 +197,7 @@ class Database:
         if artist_id is None:
             return
         try:
-            stmt = sqlalchemy.text("DELETE From Artist WHERE ArtistId = :IdToDelete LIMIT 1")
+            stmt = sqlalchemy.text("DELETE From Artist WHERE ArtistId = :IdToDelete")
             with self.db.connect() as conn:
                 result = conn.execute(stmt, IdToDelete=artist_id)
                 if result.rowcount > 0:
@@ -205,7 +205,32 @@ class Database:
         except Exception as e:
             print("delete_artist_by_id")
         return False
-
+    def get_tracks_by_popularity_and_artist_popularity(self, data):
+        if data is None:
+            return
+        try:
+            stmt = sqlalchemy.text("SELECT Track.TrackName, Artist.ArtistName From Track JOIN Album ON Track.AlbumId = Album.AlbumId JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Track.Popularity > 50 AND Artist.Popularity > 70")
+            with self.db.connect() as conn:
+                result = conn.execute(stmt)
+                if result.rowcount > 0:
+                    return True
+        except Exception as e:
+            print(e, "get_tracks_by_popularity_and_artist_popularity")
+        return False
+    
+    def get_albums_by_average_tempo(self, data):
+        if data is None:
+            return
+        try:
+            stmt = sqlalchemy.text("SELECT Album.AlbumName From Album JOIN Track ON Album.AlbumId = Track.AlbumId JOIN TrackProperties ON Track.TrackId = TrackProperties.TrackId GROUP BY AlbumId HAVING TrackProperties.Tempo > 90")
+            with self.db.connect() as conn:
+                result = conn.execute(stmt)
+                if result.rowcount > 0:
+                    return True
+        except Exception as e:
+            print(e, "get_albums_by_average_tempo")
+        return False
+    
     def update_user_like(self, like_val, user_val, artist_id_val):
         try:
             stmt = sqlalchemy.text("UPDATE ArtistLikes SET Likes = :LikeVal WHERE Username = :UserVal AND ArtistId = :ArtistIdVal")
