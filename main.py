@@ -203,7 +203,7 @@ def init_database_and_api():
 @app.route("/")
 def hello_world():
     return "Hello world!"
-    
+
 @app.route("/fill_database")
 def fill_database():
     global api
@@ -232,9 +232,9 @@ def insert_artist():
     artist_name = data['artist']
     api.fill_for_artist_by_search(escape(artist_name))
     return '', 204
-    
 
-@app.route("/api/get")
+
+@app.route("/api/getAlbums")
 def get_albums():
     data = request.data
     logger.error(data)
@@ -247,7 +247,10 @@ def update_user_like():
     data = request.get_json()
     api.update_user_like(data)
 
-
+@app.route("/api/getTracks")
+def get_tracks():
+    data = request.args
+    return api.get_tracks_by_attributes(data)
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080, debug=True)
