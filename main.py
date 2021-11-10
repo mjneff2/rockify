@@ -16,7 +16,7 @@ import datetime
 import logging
 import os
 
-from flask import Flask, render_template, request, Response, g
+from flask import Flask, render_template, request, Response, jsonify
 from flask_cors import CORS
 from markupsafe import escape
 import sqlalchemy
@@ -236,8 +236,16 @@ def insert_artist():
 
 @app.route("/api/get")
 def get_albums():
-    data = request.args
-    return api.get_albums_by_attributes(data)
+    data = request.data
+    logger.error(data)
+    return jsonify([{"album": "test album"}])
+    #return api.get_albums_by_attributes(data)
+
+@app.route("/api/update")
+def update_user_like():
+    global api
+    data = request.get_json()
+    api.update_user_like(data)
 
 
 
