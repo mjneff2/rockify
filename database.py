@@ -124,19 +124,22 @@ class Database:
 
     def get_artist_by_name(self, artist_name: str) -> Dict[str, Any]:
         if artist_name is None:
-            return
+            return None
         try:
             stmt = sqlalchemy.text("SELECT * FROM Artist WHERE LOWER(ArtistName) LIKE '%" + str(artist_name).lower() + "%' ORDER BY Popularity DESC")
             with self.db.connect() as conn:
-                conn.execute(stmt)
+                output = conn.execute(stmt)
             result = {}
 
             # Build resulting dict with attributes of artist
-            for key in stmt[0].keys():
-                result[key] = stmt[0][key]
+            columns = ['ArtistId', 'ArtistName', 'ImageUrl', 'Genre', 'Popularity']
+            top_result = list(output)[0]
+            for i, column in enumerate(columns):
+                result[column] = top_result[i]
             return result
         except Exception as e:
-            print("get_artist_by_name")
+            print(e)
+        return None
 
     def get_albums_by_attributes(self, attributes: Dict[str, Any]) -> Dict[str, Any]:
         # attributes will have artist required, optional yearfrom, yearto, optional popularity rating, optional duration
@@ -192,8 +195,12 @@ class Database:
         if artist_id is None:
             return
         try:
-            stmt = sqlalchemy.text("DELETE From Artist WHERE ArtistId = ArtistId")
+            stmt = sqlalchemy.text("DELETE From Artist WHERE ArtistId = :IdToDelete")
             with self.db.connect() as conn:
-                conn.execute(stmt, ArtistId=artist_id)
+                result = conn.execute(stmt, IdToDelete=artist_id)
+                if result.rowcount > 0:
+                    return True
         except Exception as e:
             print("delete_artist_by_id")
+            return False
+        return False

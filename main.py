@@ -216,13 +216,14 @@ def fill_artist(artist):
     api.fill_for_artist_by_search(escape(artist))
     return f"Filled for artist {escape(artist)}"
 
-@app.route("/api/delete/<artistToDelete>")
-def delete_artist(artist_name):
+@app.route("/api/delete", methods=["DELETE"])
+def delete_artist():
     global api
-    if api.delete_artist_by_name(escape(artist_name)):
+    logger.error(f"Trying to delete {request.json['artist']}")
+    if api.delete_artist_by_name(escape(request.json['artist'])):
         return '', 204
     else:
-        return 404
+        return '', 404
 
 
 @app.route("/api/insert", methods=["POST"])

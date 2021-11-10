@@ -65,3 +65,12 @@ PasswordHash VARCHAR(255),
 AuthToken VARCHAR(255),
 PRIMARY KEY (Username)
 );
+
+CREATE TABLE ArtistLikes(
+Username VARCHAR(255),
+ArtistId VARCHAR(255),
+Likes BOOLEAN,
+PRIMARY KEY(Username, ArtistId),
+FOREIGN KEY(Username) REFERENCES User(Username) ON DELETE CASCADE,
+FOREIGN KEY(ArtistId) REFERENCES Artist(ArtistId) ON DELETE CASCADE
+);

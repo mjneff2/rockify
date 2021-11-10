@@ -55,7 +55,7 @@ class APIWrapper:
         return list(set(input))
 
     def get_top_albums_from_artist(self, artist):
-        results = self.spotify.artist_albums(artist['id'], limit=50)
+        results = self.spotify.artist_albums(artist['id'], limit=10)
         albums = results['items']
         return albums
             
@@ -137,7 +137,10 @@ class APIWrapper:
 
     def delete_artist_by_name(self, artist_name):
         artist = self.db.get_artist_by_name(artist_name)
-        return self.db.delete_artist_by_id(artist['id'])
+        if artist is None:
+            return False
+        logger.error(artist)
+        return self.db.delete_artist_by_id(artist['ArtistId'])
 
     def get_albums_by_attributes(self, data):
         return self.db.get_albums_by_data(data)
