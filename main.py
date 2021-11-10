@@ -17,6 +17,7 @@ import logging
 import os
 
 from flask import Flask, render_template, request, Response
+from markupsafe import escape
 import sqlalchemy
 
 from database import Database

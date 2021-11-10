@@ -93,3 +93,26 @@ class Database:
                              Liveness=Liveness, Valence=Valence, Tempo=Tempo)
         except Exception as e:
             print(e)
+
+    def get_track_by_id(self, track_id):
+        pass
+
+    def get_track_with_features_by_id(self, track_id):
+        pass
+
+    def get_tracks_by_name(self, track_name):
+        pass
+
+    def get_tracks_with_features_by_name(self, track_name):
+        pass
+
+    def delete_track_by_id(self, track_id):
+        pass
+
+    def delete_album_by_id(self, track_id):
+        pass
+
+    def delete_artist_by_id(self, track_id):
+        pass
+    
+    
