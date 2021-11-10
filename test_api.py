@@ -134,3 +134,6 @@ class APIWrapper:
                 for track_features in track_features_list:
                     self.db.insert_track_properties(track_features)
         logger.error(f"{self.db.track_feature_calls}, {self.db.track_calls}, {self.db.artist_calls}, {self.db.album_calls}")
+
+    def delete_artist_by_name(self, artist_name):
+        self.db.

@@ -16,7 +16,8 @@ import datetime
 import logging
 import os
 
-from flask import Flask, render_template, request, Response
+from flask import Flask, render_template, request, Response, g
+from flask_cors import CORS
 from markupsafe import escape
 import sqlalchemy
 
@@ -25,6 +26,7 @@ from test_api import APIWrapper
 
 
 app = Flask(__name__)
+CORS(app)
 
 logger = logging.getLogger()
 
@@ -189,12 +191,14 @@ def init_unix_connection_engine(db_config):
 # is safe to initialize your database connection pool when your script starts
 # -- there is no need to wait for the first request.
 db = None
-
+api = None
 
 @app.before_first_request
-def init_database():
+def init_database_and_api():
     global db
+    global api
     db = db or init_connection_engine()
+    api = api or APIWrapper(Database(db))
 
 @app.route("/")
 def hello_world():
@@ -202,15 +206,39 @@ def hello_world():
     
 @app.route("/fill_database")
 def fill_database():
-    api = APIWrapper(Database(db))
+    global api
     api.fill_database()
     return "Filled database."
 
 @app.route("/artist/<artist>")
 def fill_artist(artist):
-    api = APIWrapper(Database(db))
+    global api
     api.fill_for_artist_by_search(escape(artist))
     return f"Filled for artist {escape(artist)}"
+
+@app.route("/api/delete/<artistToDelete>")
+def delete_artist(artist_name):
+    global api
+    if api.delete_artist_by_name(escape(artist_name)):
+        return '', 204
+    else:
+        return 404
+
+
+@app.route("/api/insert", methods=["POST"])
+def insert_artist():
+    global api
+    data = request.get_json()
+    artist_name = data['artist']
+    api.fill_for_artist_by_search(escape(artist_name))
+    return '', 204
+    
+
+@app.route("/api/get")
+def get_albums():
+    data = request.form
+
+
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080, debug=True)

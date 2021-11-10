@@ -106,6 +106,13 @@ class Database:
     def get_tracks_with_features_by_name(self, track_name):
         pass
 
+    def get_artist_by_name(self, artist_name):
+        pass
+
+    def get_albums_by_data(self, attributes):
+        # attributes will have artist required, optional yearfrom, yearto, optional popularity rating, optional duration
+        pass
+
     def delete_track_by_id(self, track_id):
         pass
 
@@ -115,4 +122,4 @@ class Database:
     def delete_artist_by_id(self, track_id):
         pass
     
-    
+
