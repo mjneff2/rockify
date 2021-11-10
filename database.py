@@ -60,7 +60,7 @@ class Database:
         AlbumName = album['name']
         ImageURL = album['images'][0]['url']
         Genre = "rock"
-        Popularity = 0
+        Popularity = 100
         ReleaseDate = album['release_date']
         ArtistId = album['artist_id']
         self.album_calls += 1
@@ -147,21 +147,23 @@ class Database:
             return
         try:
             # Build query based on given attributes durationFrom durationTO
-            query = "SELECT * FROM Album WHERE LOWER(ArtistName) LIKE '%" + str(attributes['artist']).lower() + "%' AND ReleaseDate BETWEEN " + str(attributes['yearFrom']) + " AND " + str(attributes['yearTo']) + " AND Popularity >= " + str(attributes['popularityRating'])
+            query = "SELECT DISTINCT AlbumName FROM Album JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE LOWER(AlbumName) LIKE '%" +str(attributes['albumName']).lower() + "%' AND LOWER(ArtistName) LIKE '%" + str(attributes['artist']).lower() + "%' AND YEAR(ReleaseDate) BETWEEN " + str(attributes['yearFrom']) + " AND " + str(attributes['yearTo']) + " AND Album.Popularity >= " + str(attributes['popularityRating'])
             stmt = sqlalchemy.text(query)
+            print(str(stmt))
             with self.db.connect() as conn:
-                conn.execute(stmt)
+                output = conn.execute(stmt)
 
             # Build dict result with attributes of album
             result = []
-            for row in stmt:
+            columns = ["AlbumName"]
+            for row in output:
                 albumDict = {}
-                for key in row.keys():
-                    albumDict[key] = row[key]
+                for i, column in enumerate(columns):
+                    albumDict[column] = row[i]
                 result.append(albumDict)
             return result
         except Exception as e:
-            print("get_albums_by_attributes")
+            print(e)
 
     def get_tracks_by_attributes(self, attributes: Dict[str, Any]) -> Dict[str, Any]:
 
@@ -202,5 +204,15 @@ class Database:
                     return True
         except Exception as e:
             print("delete_artist_by_id")
-            return False
+        return False
+
+    def update_user_like(self, like_val, user_val, artist_id_val):
+        try:
+            stmt = sqlalchemy.text("UPDATE ArtistLikes SET Likes = :LikeVal WHERE Username = :UserVal AND ArtistId = :ArtistIdVal")
+            with self.db.connect() as conn:
+                result = conn.execute(stmt, LikeVal=like_val, UserVal=user_val, ArtistIdVal=artist_id_val)
+                if result.rowcount > 0:
+                    return True
+        except Exception as e:
+            print(e)
         return False

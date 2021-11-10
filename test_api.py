@@ -143,4 +143,7 @@ class APIWrapper:
         return self.db.delete_artist_by_id(artist['ArtistId'])
 
     def get_albums_by_attributes(self, data):
-        return self.db.get_albums_by_data(data)
+        return self.db.get_albums_by_attributes(data)
+
+    def update_user_like(self, data):
+        return self.db.update_user_like(data['favorite'], data['userName'], self.db.get_artist_by_name(data['artist'])['ArtistId'])

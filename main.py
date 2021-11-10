@@ -237,16 +237,21 @@ def insert_artist():
 
 @app.route("/api/getAlbums")
 def get_albums():
-    data = request.data
+    data = request.args
     logger.error(data)
-    return jsonify([{"album": "test album"}])
+    logger.error(api.get_albums_by_attributes(data))
+    return jsonify(api.get_albums_by_attributes(data))
     #return api.get_albums_by_attributes(data)
 
-@app.route("/api/update")
+@app.route("/api/update", methods=["PATCH"])
 def update_user_like():
     global api
     data = request.get_json()
-    api.update_user_like(data)
+    logger.error(data)
+    if api.update_user_like(data):
+        return '', 204
+    else:
+        return '', 404
 
 @app.route("/api/getTracks")
 def get_tracks():
