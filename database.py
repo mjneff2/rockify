@@ -32,7 +32,7 @@ class Database:
                 ArtistId = artist['id']
                 stmt2 = sqlalchemy.text("INSERT INTO TrackArtist (TrackId, ArtistId)" " VALUES (:TrackId, :ArtistId)")
                 with self.db.connect() as conn:
-                    conn.execute(stmt2, TrackId=TrackId, ArtistId=ArtistId)  
+                    conn.execute(stmt2, TrackId=TrackId, ArtistId=ArtistId)
         except Exception as e:
             print(e)
 
@@ -61,7 +61,7 @@ class Database:
         ImageURL = album['images'][0]['url']
         Genre = "rock"
         Popularity = 0
-        ReleaseDate = album['release_date']  
+        ReleaseDate = album['release_date']
         ArtistId = album['artist_id']
         self.album_calls += 1
         try:
@@ -148,7 +148,7 @@ class Database:
             stmt = sqlalchemy.text(query)
             with self.db.connect() as conn:
                 conn.execute(stmt)
-            
+
             # Build dict result with attributes of album
             result = []
             for row in stmt:
@@ -159,7 +159,28 @@ class Database:
             return result
         except Exception as e:
             print("get_albums_by_attributes")
-        
+
+    def get_tracks_by_attributes(self, attributes: Dict[str, Any]) -> Dict[str, Any]:
+
+        if attributes is None:
+            return
+        try:
+            # Build query based on given attributes durationFrom durationTO
+            query = "SELECT * FROM Track WHERE LOWER(TrackName) LIKE '%" + str(attributes['track']).lower() + "%' AND ArtistName LIKE '%" + str(attributes['artist']) + "%' AND Duration BETWEEN" + str(attributes['durationLowerBound']) + " AND " + str('attributes[durationUpperBound]') + " AND Popularity >= " + str(attributes['popularityRating'])
+            stmt = sqlalchemy.text(query)
+            with self.db.connect() as conn:
+                conn.execute(stmt)
+
+            # Build dict result with attributes of album
+            result = []
+            for row in stmt:
+                trackDict = {}
+                for key in row.keys():
+                    trackDict[key] = row[key]
+                result.append(trackDict)
+            return result
+        except Exception as e:
+            print("get_tracks_by_attributes")
 
     def delete_track_by_id(self, track_id):
         pass
