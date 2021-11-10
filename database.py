@@ -174,11 +174,11 @@ class Database:
             query = "SELECT * FROM Track WHERE LOWER(TrackName) LIKE '%" + str(attributes['track']).lower() + "%' AND ArtistName LIKE '%" + str(attributes['artist']) + "%' AND Duration BETWEEN" + str(attributes['durationLowerBound']) + " AND " + str('attributes[durationUpperBound]') + " AND Popularity >= " + str(attributes['popularityRating'])
             stmt = sqlalchemy.text(query)
             with self.db.connect() as conn:
-                conn.execute(stmt)
+                output = conn.execute(stmt)
 
             # Build dict result with attributes of album
             result = []
-            for row in stmt:
+            for row in output:
                 trackDict = {}
                 for key in row.keys():
                     trackDict[key] = row[key]
@@ -205,28 +205,42 @@ class Database:
         except Exception as e:
             print("delete_artist_by_id")
         return False
-    def get_tracks_by_popularity_and_artist_popularity(self, data):
-        if data is None:
+    def get_tracks_by_popularity_and_artist_popularity(self, artistPopularityRating, trackPopularityRating):
+        if artistPopularityRating is None or trackPopularityRating is None:
             return
         try:
-            stmt = sqlalchemy.text("SELECT Track.TrackName, Artist.ArtistName From Track JOIN Album ON Track.AlbumId = Album.AlbumId JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Track.Popularity > 50 AND Artist.Popularity > 70")
+            stmt = sqlalchemy.text("SELECT Track.TrackName, Artist.ArtistName From Track JOIN Album ON Track.AlbumId = Album.AlbumId JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Track.Popularity > trackPopularityToAdd AND Artist.Popularity > artistPopularityToAdd")
             with self.db.connect() as conn:
-                result = conn.execute(stmt)
-                if result.rowcount > 0:
-                    return True
+                output = conn.execute(stmt, trackPopularityToAdd=trackPopularityRating, artistPopularityToAdd=artistPopularityRating)
+                # Build dict result with attributes of album
+            result = []
+            columns = ["TrackName", "ArtistName"]
+            for row in output:
+                albumDict = {}
+                for i, column in enumerate(columns):
+                    albumDict[column] = row[i]
+                result.append(albumDict)
+            return result
         except Exception as e:
             print(e, "get_tracks_by_popularity_and_artist_popularity")
         return False
     
-    def get_albums_by_average_tempo(self, data):
-        if data is None:
+    def get_albums_by_average_tempo(self, tempo):
+        if tempo is None:
             return
         try:
-            stmt = sqlalchemy.text("SELECT Album.AlbumName From Album JOIN Track ON Album.AlbumId = Track.AlbumId JOIN TrackProperties ON Track.TrackId = TrackProperties.TrackId GROUP BY AlbumId HAVING TrackProperties.Tempo > 90")
+            stmt = sqlalchemy.text("SELECT Album.AlbumName From Album JOIN Track ON Album.AlbumId = Track.AlbumId JOIN TrackProperties ON Track.TrackId = TrackProperties.TrackId GROUP BY AlbumId HAVING TrackProperties.Tempo > tempoToAdd")
             with self.db.connect() as conn:
-                result = conn.execute(stmt)
-                if result.rowcount > 0:
-                    return True
+                output = conn.execute(stmt, tempoToAdd=tempo)
+                # Build dict result with attributes of album
+            result = []
+            columns = ["AlbumName"]
+            for row in output:
+                albumDict = {}
+                for i, column in enumerate(columns):
+                    albumDict[column] = row[i]
+                result.append(albumDict)
+            return result
         except Exception as e:
             print(e, "get_albums_by_average_tempo")
         return False
