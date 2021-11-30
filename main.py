@@ -56,6 +56,7 @@ class User:
             user.identity = result[0]
             user.password = result[1]
             user.rolenames = "User"
+            return user
 
 
     @classmethod
@@ -234,16 +235,21 @@ def init_database_and_api():
     db = db or init_connection_engine()
     api = api or APIWrapper(Database(db))
 
-@app.route("/register", methods=["POST"])
+@app.route("/api/register", methods=["POST"])
 def register():
     req = request.get_json(force=True)
     username = req.get("username", None)
     password = req.get("password", None)
-    with db.connect
+    with db.connect() as conn:
+        conn.execute(
+            "INSERT INTO User (Username, PasswordHash, AuthToken) "
+            "VALUES ('" + username + "', '" + guard.hash_password(password) + "', NULL);"
+        )
+    user = guard.authenticate(username, password)
     ret = {"access_token": guard.encode_jwt_token(user)}
     return (jsonify(ret), 200)
 
-@app.route("/login", methods=["POST"])
+@app.route("/api/login", methods=["POST"])
 def login():
     """
     Logs a user in by parsing a POST request containing user credentials and
@@ -297,7 +303,11 @@ def recommend_track():
 @app.route("/api/interact/artist", methods=['POST'])
 @flask_praetorian.auth_required
 def interact_artist():
-    pass
+    req = request.get_json(force=True)
+    artist_id = req.get("artist_id", None)
+    interaction = req.get("interaction", None) # LIKE, DISLIKE, NEUTRAL
+    username = flask_praetorian.current_user().username
+    # Insert, update or delete based on value of interaction
 
 @app.route("/api/interact/album", methods=['POST'])
 @flask_praetorian.auth_required
