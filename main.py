@@ -48,7 +48,7 @@ class User:
         """
         with db.connect() as conn:
             result = conn.execute(
-                "SELECT Username, PasswordHash From User WHERE Username = " + username
+                "SELECT Username, PasswordHash From User WHERE Username = '" + username + "'"
             ).first()
             if not result:
                 return None
@@ -234,6 +234,15 @@ def init_database_and_api():
     db = db or init_connection_engine()
     api = api or APIWrapper(Database(db))
 
+@app.route("/register", methods=["POST"])
+def register():
+    req = request.get_json(force=True)
+    username = req.get("username", None)
+    password = req.get("password", None)
+    with db.connect
+    ret = {"access_token": guard.encode_jwt_token(user)}
+    return (jsonify(ret), 200)
+
 @app.route("/login", methods=["POST"])
 def login():
     """
@@ -255,34 +264,50 @@ def login():
 def hello_world():
     return "Hello world!"
 
-@app.route("/api/login")
-
 @app.route("/api/search/artist")
-@flask
+@flask_praetorian.auth_required
+def search_artist():
+    pass
 
 @app.route("/api/search/album")
-@login_required
+@flask_praetorian.auth_required
+def search_album():
+    pass
 
 @app.route("/api/search/track")
-@login_required
+@flask_praetorian.auth_required
+def search_track():
+    pass
 
 @app.route("/api/recommend/artist")
-@login_required
+@flask_praetorian.auth_required
+def recommend_artist():
+    pass
 
 @app.route("/api/recommend/album")
-@login_required
+@flask_praetorian.auth_required
+def recommend_album():
+    pass
 
 @app.route("/api/recommend/track")
-@login_required
+@flask_praetorian.auth_required
+def recommend_track():
+    pass
 
 @app.route("/api/interact/artist", methods=['POST'])
-@login_required
+@flask_praetorian.auth_required
+def interact_artist():
+    pass
 
 @app.route("/api/interact/album", methods=['POST'])
-@login_required
+@flask_praetorian.auth_required
+def interact_album():
+    pass
 
 @app.route("/api/interact/track", methods=['POST'])
-@login_required
+@flask_praetorian.auth_required
+def interact_track():
+    pass
 
 
 
