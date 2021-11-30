@@ -306,17 +306,19 @@ def interact_artist():
     req = request.get_json(force=True)
     artist_id = req.get("artist_id", None)
     interaction = req.get("interaction", None) # LIKE, DISLIKE, NEUTRAL
-    username = flask_praetorian.current_user().username
+    username = flask_praetorian.current_user().identity
     # Insert, update or delete based on value of interaction
     result = None
     try:
-        stmt = sqlalchemy.text("SELECT * FROM ArtistLikes WHERE ArtistId = artistIdToAdd AND Username = usernameToCheck")
+        stmt = sqlalchemy.text("SELECT * FROM ArtistLikes WHERE ArtistId = :artistIdToAdd AND Username = :usernameToCheck")
         with db.connect() as conn:
-            result = conn.execute(stmt, artistIdToAdd=artist_id, usernameToCheck=username)
+            result = conn.execute(stmt, artistIdToAdd=artist_id, usernameToCheck=username).first()
     except Exception as e:
         print(e, "Trying to find artist in artist likes table")
-
+    
     if not result:
+        if interaction == "NEUTRAL":
+            return '', 204
         # Insert artist into artist likes table
         like = None
         if interaction == "LIKE":
@@ -324,7 +326,7 @@ def interact_artist():
         else:
             like = False
         try:
-            stmt = sqlalchemy.text("INSERT INTO ArtistLikes VALUES (usernameToCheck, artistIdToAdd, likeValue)")
+            stmt = sqlalchemy.text("INSERT INTO ArtistLikes VALUES (:usernameToCheck, :artistIdToAdd, :likeValue)")
             with db.connect() as conn:
                 conn.execute(stmt, usernameToCheck=username, artistIdToAdd=artist_id, likeValue = like)
         except Exception as e:
@@ -333,7 +335,7 @@ def interact_artist():
         # Check if change to neutral (delete), otherwise get correct bool value (update)
         if interaction == "NEUTRAL":
             try:
-                stmt = sqlalchemy.text("DELETE FROM ArtistLikes WHERE Username = usernameToCheck AND ArtistId = artistIdToAdd LIMIT 1")
+                stmt = sqlalchemy.text("DELETE FROM ArtistLikes WHERE Username = :usernameToCheck AND ArtistId = :artistIdToAdd LIMIT 1")
                 with db.connect() as conn:
                     conn.execute(stmt, usernameToCheck=username, artistIdToAdd=artist_id)
             except Exception as e:
@@ -345,21 +347,120 @@ def interact_artist():
             elif interaction == "DISLIKE":
                 like = False
             try:
-                stmt = sqlalchemy.text("UPDATE ArtistLikes SET Likes = likeVal WHERE Username = usernameToCheck AND ArtistId = artistIdToAdd LIMIT 1")
+                stmt = sqlalchemy.text("UPDATE ArtistLikes SET Likes = :likeVal WHERE Username = :usernameToCheck AND ArtistId = :artistIdToAdd LIMIT 1")
                 with db.connect() as conn:
                     conn.execute(stmt, usernameToCheck=username, artistIdToAdd=artist_id, likeVal = like)
             except Exception as e:
                 print(e)
+    return '', 204
 
 @app.route("/api/interact/album", methods=['POST'])
 @flask_praetorian.auth_required
 def interact_album():
-    pass
+    req = request.get_json(force=True)
+    album_id = req.get("album_id", None)
+    interaction = req.get("interaction", None) # LIKE, DISLIKE, NEUTRAL
+    username = flask_praetorian.current_user().identity
+    # Insert, update or delete based on value of interaction
+    result = None
+    try:
+        stmt = sqlalchemy.text("SELECT * FROM AlbumLikes WHERE AlbumId = :albumIdToAdd AND Username = :usernameToCheck")
+        with db.connect() as conn:
+            result = conn.execute(stmt, albumIdToAdd=album_id, usernameToCheck=username).first()
+    except Exception as e:
+        print(e)
+    
+    if not result:
+        if interaction == "NEUTRAL":
+            return '', 204
+        # Insert artist into artist likes table
+        like = None
+        if interaction == "LIKE":
+            like = True
+        else:
+            like = False
+        try:
+            stmt = sqlalchemy.text("INSERT INTO AlbumLikes VALUES (:usernameToCheck, :albumIdToAdd, :likeValue)")
+            with db.connect() as conn:
+                conn.execute(stmt, usernameToCheck=username, albumIdToAdd=album_id, likeValue = like)
+        except Exception as e:
+            print(e)
+    else:
+        # Check if change to neutral (delete), otherwise get correct bool value (update)
+        if interaction == "NEUTRAL":
+            try:
+                stmt = sqlalchemy.text("DELETE FROM AlbumLikes WHERE Username = :usernameToCheck AND AlbumId = :albumIdToAdd LIMIT 1")
+                with db.connect() as conn:
+                    conn.execute(stmt, usernameToCheck=username, albumIdToAdd=album_id)
+            except Exception as e:
+                print(e)
+        else:
+            like = None
+            if interaction == "LIKE":
+                like = True
+            elif interaction == "DISLIKE":
+                like = False
+            try:
+                stmt = sqlalchemy.text("UPDATE AlbumLikes SET Likes = :likeVal WHERE Username = :usernameToCheck AND AlbumId = :albumIdToAdd LIMIT 1")
+                with db.connect() as conn:
+                    conn.execute(stmt, usernameToCheck=username, albumIdToAdd=album_id, likeVal = like)
+            except Exception as e:
+                print(e)
+    return '', 204
 
 @app.route("/api/interact/track", methods=['POST'])
 @flask_praetorian.auth_required
 def interact_track():
-    pass
+    req = request.get_json(force=True)
+    track_id = req.get("track_id", None)
+    interaction = req.get("interaction", None) # LIKE, DISLIKE, NEUTRAL
+    username = flask_praetorian.current_user().identity
+    # Insert, update or delete based on value of interaction
+    result = None
+    try:
+        stmt = sqlalchemy.text("SELECT * FROM TrackLikes WHERE TrackId = :trackIdToAdd AND Username = :usernameToCheck")
+        with db.connect() as conn:
+            result = conn.execute(stmt, trackIdToAdd=track_id, usernameToCheck=username).first()
+    except Exception as e:
+        print(e)
+    
+    if not result:
+        if interaction == "NEUTRAL":
+            return '', 204
+        # Insert artist into artist likes table
+        like = None
+        if interaction == "LIKE":
+            like = True
+        else:
+            like = False
+        try:
+            stmt = sqlalchemy.text("INSERT INTO TrackLikes VALUES (:usernameToCheck, :trackIdToAdd, :likeValue)")
+            with db.connect() as conn:
+                conn.execute(stmt, usernameToCheck=username, trackIdToAdd=track_id, likeValue = like)
+        except Exception as e:
+            print(e)
+    else:
+        # Check if change to neutral (delete), otherwise get correct bool value (update)
+        if interaction == "NEUTRAL":
+            try:
+                stmt = sqlalchemy.text("DELETE FROM TrackLikes WHERE Username = :usernameToCheck AND TrackId = :trackIdToAdd LIMIT 1")
+                with db.connect() as conn:
+                    conn.execute(stmt, usernameToCheck=username, trackIdToAdd=track_id)
+            except Exception as e:
+                print(e)
+        else:
+            like = None
+            if interaction == "LIKE":
+                like = True
+            elif interaction == "DISLIKE":
+                like = False
+            try:
+                stmt = sqlalchemy.text("UPDATE TrackLikes SET Likes = :likeVal WHERE Username = :usernameToCheck AND TrackId = :trackIdToAdd LIMIT 1")
+                with db.connect() as conn:
+                    conn.execute(stmt, usernameToCheck=username, trackIdToAdd=track_id, likeVal = like)
+            except Exception as e:
+                print(e)
+    return '', 204
 
 
 
