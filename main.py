@@ -308,6 +308,48 @@ def interact_artist():
     interaction = req.get("interaction", None) # LIKE, DISLIKE, NEUTRAL
     username = flask_praetorian.current_user().username
     # Insert, update or delete based on value of interaction
+    result = None
+    try:
+        stmt = sqlalchemy.text("SELECT * FROM ArtistLikes WHERE ArtistId = artistIdToAdd AND Username = usernameToCheck")
+        with db.connect() as conn:
+            result = conn.execute(stmt, artistIdToAdd=artist_id, usernameToCheck=username)
+    except Exception as e:
+        print(e, "Trying to find artist in artist likes table")
+
+    if not result:
+        # Insert artist into artist likes table
+        like = None
+        if interaction == "LIKE":
+            like = True
+        else:
+            like = False
+        try:
+            stmt = sqlalchemy.text("INSERT INTO ArtistLikes VALUES (usernameToCheck, artistIdToAdd, likeValue)")
+            with db.connect() as conn:
+                conn.execute(stmt, usernameToCheck=username, artistIdToAdd=artist_id, likeValue = like)
+        except Exception as e:
+            print(e, "Trying to insert artist in ArtistLikes")
+    else:
+        # Check if change to neutral (delete), otherwise get correct bool value (update)
+        if interaction == "NEUTRAL":
+            try:
+                stmt = sqlalchemy.text("DELETE FROM ArtistLikes WHERE Username = usernameToCheck AND ArtistId = artistIdToAdd LIMIT 1")
+                with db.connect() as conn:
+                    conn.execute(stmt, usernameToCheck=username, artistIdToAdd=artist_id)
+            except Exception as e:
+                print(e)
+        else:
+            like = None
+            if interaction == "LIKE":
+                like = True
+            elif interaction == "DISLIKE":
+                like = False
+            try:
+                stmt = sqlalchemy.text("UPDATE ArtistLikes SET Likes = likeVal WHERE Username = usernameToCheck AND ArtistId = artistIdToAdd LIMIT 1")
+                with db.connect() as conn:
+                    conn.execute(stmt, usernameToCheck=username, artistIdToAdd=artist_id, likeVal = like)
+            except Exception as e:
+                print(e)
 
 @app.route("/api/interact/album", methods=['POST'])
 @flask_praetorian.auth_required
