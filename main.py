@@ -19,6 +19,7 @@ from flask_cors import CORS
 from markupsafe import escape
 import sqlalchemy
 import flask_praetorian
+from sqlalchemy.exc import IntegrityError
 
 from database import Database
 from test_api import APIWrapper
@@ -240,11 +241,14 @@ def register():
     req = request.get_json(force=True)
     username = req.get("username", None)
     password = req.get("password", None)
-    with db.connect() as conn:
-        conn.execute(
-            "INSERT INTO User (Username, PasswordHash, AuthToken) "
-            "VALUES ('" + username + "', '" + guard.hash_password(password) + "', NULL);"
-        )
+    try:
+        with db.connect() as conn:
+            conn.execute(
+                "INSERT INTO User (Username, PasswordHash, AuthToken) "
+                "VALUES ('" + username + "', '" + guard.hash_password(password) + "', NULL);"
+            )
+    except IntegrityError:
+        return 'User already exists', 409
     user = guard.authenticate(username, password)
     ret = {"access_token": guard.encode_jwt_token(user)}
     return (jsonify(ret), 200)
