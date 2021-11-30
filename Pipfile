@@ -22,6 +22,8 @@ PyMySQL = "==1.0.2"
 SQLAlchemy = "==1.4.25"
 Werkzeug = "==2.0.2"
 flask-cors = "*"
+flask-login = "*"
+flask-praetorian = {git = "https://github.com/dusktreader/flask-praetorian"}
 
 [dev-packages]
 

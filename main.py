@@ -12,24 +12,66 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
-import logging
 import os
 
-from flask import Flask, render_template, request, Response, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from markupsafe import escape
 import sqlalchemy
+import flask_praetorian
 
 from database import Database
 from test_api import APIWrapper
 
-
+db = None
+guard = flask_praetorian.Praetorian()
+api = None
 app = Flask(__name__)
+app.config["SECRET_KEY"] = "top secret"
+app.config["JWT_ACCESS_LIFESPAN"] = {"hours": 24}
+app.config["JWT_REFRESH_LIFESPAN"] = {"days": 30}
 CORS(app)
 
-logger = logging.getLogger()
+class User:
+    def __init__(self):
+        self.identity = None
+        self.password = None
+        self.rolenames = None
 
+    @classmethod
+    def lookup(cls, username):
+        """
+        *Required Method*
+        flask-praetorian requires that the user class implements a ``lookup()``
+        class method that takes a single ``username`` argument and returns a user
+        instance if there is one that matches or ``None`` if there is not.
+        """
+        with db.connect() as conn:
+            result = conn.execute(
+                "SELECT Username, PasswordHash From User WHERE Username = " + username
+            ).first()
+            if not result:
+                return None
+            user = User()
+            user.identity = result[0]
+            user.password = result[1]
+            user.rolenames = "User"
+
+
+    @classmethod
+    def identify(cls, id):
+        """
+        *Required Method*
+        flask-praetorian requires that the user class implements an ``identify()``
+        class method that takes a single ``id`` argument and returns user instance if
+        there is one that matches or ``None`` if there is not.
+        """
+        return cls.lookup(id)
+
+    def is_valid(self):
+        return True
+
+guard.init_app(app, User)
 
 def init_connection_engine():
     db_config = {
@@ -185,14 +227,6 @@ def init_unix_connection_engine(db_config):
 
     return pool
 
-
-# This global variable is declared with a value of `None`, instead of calling
-# `init_connection_engine()` immediately, to simplify testing. In general, it
-# is safe to initialize your database connection pool when your script starts
-# -- there is no need to wait for the first request.
-db = None
-api = None
-
 @app.before_first_request
 def init_database_and_api():
     global db
@@ -200,9 +234,57 @@ def init_database_and_api():
     db = db or init_connection_engine()
     api = api or APIWrapper(Database(db))
 
+@app.route("/login", methods=["POST"])
+def login():
+    """
+    Logs a user in by parsing a POST request containing user credentials and
+    issuing a JWT token.
+    .. example::
+       $ curl http://localhost:5000/login -X POST \
+         -d '{"username":"Walter","password":"calmerthanyouare"}'
+    """
+    req = request.get_json(force=True)
+    username = req.get("username", None)
+    password = req.get("password", None)
+    user = guard.authenticate(username, password)
+    ret = {"access_token": guard.encode_jwt_token(user)}
+    return (jsonify(ret), 200)
+
+
 @app.route("/")
 def hello_world():
     return "Hello world!"
+
+@app.route("/api/login")
+
+@app.route("/api/search/artist")
+@flask
+
+@app.route("/api/search/album")
+@login_required
+
+@app.route("/api/search/track")
+@login_required
+
+@app.route("/api/recommend/artist")
+@login_required
+
+@app.route("/api/recommend/album")
+@login_required
+
+@app.route("/api/recommend/track")
+@login_required
+
+@app.route("/api/interact/artist", methods=['POST'])
+@login_required
+
+@app.route("/api/interact/album", methods=['POST'])
+@login_required
+
+@app.route("/api/interact/track", methods=['POST'])
+@login_required
+
+
 
 @app.route("/fill_database")
 def fill_database():
