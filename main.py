@@ -335,8 +335,7 @@ def search_track():
                     ids.add(asdict["TrackId"])
                     results.append(asdict)
     results.sort(key = lambda x: keyword_count(x["TrackName"], keywords), reverse=True)
-    response = jsonify(results)
-    return (response, 200)
+    return (jsonify(results), 200)
 
 @app.route("/api/recommend/artist")
 @flask_praetorian.auth_required
@@ -353,9 +352,17 @@ def recommend_album():
 def recommend_track():
     pass
 
-@app.route("/api/interact/artist", methods=['POST'])
+@app.route("/api/interact/artist", methods=['GET', 'POST'])
 @flask_praetorian.auth_required
 def interact_artist():
+    if request.method == 'GET':
+        results = []
+        with db.connect() as conn:
+            stmt = sqlalchemy.text("SELECT * FROM Artist NATURAL JOIN ArtistLikes WHERE Username = :usernameToCheck")
+            result = conn.execute(stmt, usernameToCheck = flask_praetorian.current_user().identity)
+            for row in result:
+                results.append(dict(row))
+        return (jsonify(results), 200)
     req = request.get_json(force=True)
     artist_id = req.get("artist_id", None)
     interaction = req.get("interaction", None) # LIKE, DISLIKE, NEUTRAL
@@ -407,9 +414,17 @@ def interact_artist():
                 print(e)
     return '', 204
 
-@app.route("/api/interact/album", methods=['POST'])
+@app.route("/api/interact/album", methods=['GET', 'POST'])
 @flask_praetorian.auth_required
 def interact_album():
+    if request.method == 'GET':
+        results = []
+        with db.connect() as conn:
+            stmt = sqlalchemy.text("SELECT * FROM Album NATURAL JOIN AlbumLikes WHERE Username = :usernameToCheck")
+            result = conn.execute(stmt, usernameToCheck = flask_praetorian.current_user().identity)
+            for row in result:
+                results.append(dict(row))
+        return (jsonify(results), 200)
     req = request.get_json(force=True)
     album_id = req.get("album_id", None)
     interaction = req.get("interaction", None) # LIKE, DISLIKE, NEUTRAL
@@ -461,9 +476,17 @@ def interact_album():
                 print(e)
     return '', 204
 
-@app.route("/api/interact/track", methods=['POST'])
+@app.route("/api/interact/track", methods=['GET', 'POST'])
 @flask_praetorian.auth_required
 def interact_track():
+    if request.method == 'GET':
+        results = []
+        with db.connect() as conn:
+            stmt = sqlalchemy.text("SELECT * FROM Track NATURAL JOIN TrackLikes WHERE Username = :usernameToCheck")
+            result = conn.execute(stmt, usernameToCheck = flask_praetorian.current_user().identity)
+            for row in result:
+                results.append(dict(row))
+        return (jsonify(results), 200)
     req = request.get_json(force=True)
     track_id = req.get("track_id", None)
     interaction = req.get("interaction", None) # LIKE, DISLIKE, NEUTRAL
@@ -514,7 +537,6 @@ def interact_track():
             except Exception as e:
                 print(e)
     return '', 204
-
 
 
 @app.route("/fill_database")
