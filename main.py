@@ -24,15 +24,6 @@ from sqlalchemy.exc import IntegrityError
 from database import Database
 from test_api import APIWrapper
 
-db = None
-guard = flask_praetorian.Praetorian()
-api = None
-app = Flask(__name__)
-app.config["SECRET_KEY"] = "top secret"
-app.config["JWT_ACCESS_LIFESPAN"] = {"hours": 24}
-app.config["JWT_REFRESH_LIFESPAN"] = {"days": 30}
-CORS(app)
-
 class User:
     def __init__(self):
         self.identity = None
@@ -73,7 +64,16 @@ class User:
     def is_valid(self):
         return True
 
+db = None
+guard = flask_praetorian.Praetorian()
+cors = CORS()
+api = None
+app = Flask(__name__)
+app.config["SECRET_KEY"] = "top secret"
+app.config["JWT_ACCESS_LIFESPAN"] = {"hours": 24}
+app.config["JWT_REFRESH_LIFESPAN"] = {"days": 30}
 guard.init_app(app, User)
+cors.init_app(app)
 
 def init_connection_engine():
     db_config = {
@@ -236,6 +236,10 @@ def init_database_and_api():
     db = db or init_connection_engine()
     api = api or APIWrapper(Database(db))
 
+@app.route("/")
+def hello():
+    return "Hello"
+
 @app.route("/api/register", methods=["POST"])
 def register():
     req = request.get_json(force=True)
@@ -269,25 +273,70 @@ def login():
     ret = {"access_token": guard.encode_jwt_token(user)}
     return (jsonify(ret), 200)
 
-
-@app.route("/")
-def hello_world():
-    return "Hello world!"
+def keyword_count(name, keywords):
+    count = 0
+    for word in keywords.split(' '):
+        if word.lower() in name.lower():
+            count += 1
+    return count
 
 @app.route("/api/search/artist")
 @flask_praetorian.auth_required
 def search_artist():
-    pass
+    keywords = request.args.get("name").strip()
+    username = flask_praetorian.current_user().identity
+    results = []
+    ids = set()
+    with db.connect() as conn:
+        for word in keywords.split(' '):
+            stmt = sqlalchemy.text("SELECT a.ArtistId, ArtistName, ImageUrl, Genre, Popularity, Likes FROM Artist a LEFT JOIN ArtistLikes al ON a.ArtistId = al.ArtistId AND al.Username = :user WHERE LOWER(a.ArtistName) LIKE :lowerword")
+            result = conn.execute(stmt, user=username, lowerword="%"+word.lower()+"%").all()
+            for row in result:
+                asdict = dict(row)
+                if asdict["ArtistId"] not in ids:
+                    ids.add(asdict["ArtistId"])
+                    results.append(asdict)
+    results.sort(key = lambda x: keyword_count(x["ArtistName"], keywords), reverse=True)
+    return (jsonify(results), 200)
 
 @app.route("/api/search/album")
 @flask_praetorian.auth_required
 def search_album():
-    pass
+    keywords = request.args.get("name").strip()
+    username = flask_praetorian.current_user().identity
+    results = []
+    ids = set()
+    with db.connect() as conn:
+        for word in keywords.split(' '):
+            stmt = sqlalchemy.text("SELECT a.AlbumId, AlbumName, ArtistId, Genre, ImageUrl, Likes, Popularity, ReleaseDate FROM Album a LEFT JOIN AlbumLikes al ON a.AlbumId = al.AlbumId AND al.Username = :user WHERE LOWER(a.AlbumName) LIKE :lowerword")
+            result = conn.execute(stmt, user=username, lowerword="%"+word.lower()+"%").all()
+            for row in result:
+                asdict = dict(row)
+                if asdict["AlbumId"] not in ids:
+                    ids.add(asdict["AlbumId"])
+                    results.append(asdict)
+    results.sort(key = lambda x: keyword_count(x["AlbumName"], keywords), reverse=True)
+    return (jsonify(results), 200)
 
 @app.route("/api/search/track")
 @flask_praetorian.auth_required
 def search_track():
-    pass
+    keywords = request.args.get("name").strip()
+    username = flask_praetorian.current_user().identity
+    results = []
+    ids = set()
+    with db.connect() as conn:
+        for word in keywords.split(' '):
+            stmt = sqlalchemy.text("SELECT a.TrackId, TrackName, AlbumId, Duration, Genre, ImageURL, Likes, Popularity, ReleaseDate FROM Track a LEFT JOIN TrackLikes al ON a.TrackId = al.TrackId AND al.Username = :user WHERE LOWER(a.TrackName) LIKE :lowerword")
+            result = conn.execute(stmt, user=username, lowerword="%"+word.lower()+"%").all()
+            for row in result:
+                asdict = dict(row)
+                if asdict["TrackId"] not in ids:
+                    ids.add(asdict["TrackId"])
+                    results.append(asdict)
+    results.sort(key = lambda x: keyword_count(x["TrackName"], keywords), reverse=True)
+    response = jsonify(results)
+    return (response, 200)
 
 @app.route("/api/recommend/artist")
 @flask_praetorian.auth_required
@@ -502,8 +551,6 @@ def insert_artist():
 @app.route("/api/getAlbums")
 def get_albums():
     data = request.args
-    logger.error(data)
-    logger.error(api.get_albums_by_attributes(data))
     return jsonify(api.get_albums_by_attributes(data))
     #return api.get_albums_by_attributes(data)
 
