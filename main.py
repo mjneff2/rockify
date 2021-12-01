@@ -341,8 +341,7 @@ def search_track():
 @app.route("/api/recommend/artist")
 @flask_praetorian.auth_required
 def recommend_artist():
-    req = request.get_json(force=True)
-    username = req.get("username", None)
+    username = flask_praetorian.current_user().identity
 
     result = None
     try:
@@ -352,12 +351,15 @@ def recommend_artist():
     except Exception as e:
         print(e)
     
+    if not result:
+        return 'No Liked Artist', 690
+
     # loop through all liked songs to find average of all track properties
     avgTrackProperties = [[0, 0, 'Danceability'],[0, 0, 'Energy'],[0, 0, 'Loudness'],[0, 0, 'Speechiness'],[0, 0, 'Acousticness'],[0, 0, 'Instrumentalness'],[0, 0, 'Liveness'],[0, 0, 'Valence'],[0, 0, 'Tempo']]
-    for artistId in result['ArtistId']:
+    for artistId in result:
         ArtistTracks = None
         try:
-            stmt = sqlalchemy.text("SELECT Danceability, Energy, Loudness, Speechiness, Acousticness, Instrumentalness, Liveness, Valence, Tempo FROM Artist a NATURAL JOIN Track tr JOIN TrackProperties tp ON (tr.TrackId = tp.TrackId) WHERE ArtistId = :artistIdToCheck")
+            stmt = sqlalchemy.text("SELECT tp.* FROM Artist ar JOIN Album al ON (ar.ArtistId=al.ArtistId) JOIN Track tr ON (al.AlbumId=tr.AlbumId) JOIN TrackProperties tp ON (tr.TrackId=tp.TrackId) WHERE ar.ArtistId = :artistIdToCheck")
             with db.connect() as conn:
                 ArtistTracks = conn.execute(stmt, artistIdToCheck=artistId).first()
         except Exception as e:
@@ -365,25 +367,24 @@ def recommend_artist():
         
         # Update avgTrackProperties with data of current track
         for i in range(len(avgTrackProperties)):
-            avgTrackProperties[i][0] = (avgTrackProperties[i][0] * avgTrackProperties[i][1] + ArtistTracks[avgTrackProperties[2]]) / (1 + avgTrackProperties[i][1])
+            avgTrackProperties[i][0] = (avgTrackProperties[i][0] * avgTrackProperties[i][1] + ArtistTracks[avgTrackProperties[i][2]]) / (1 + avgTrackProperties[i][1])
             avgTrackProperties[i][1] += 1
     
     # Find similar songs based on avg track properties liked with a range of +- 10 (LIMIT 15)
     output = None
     try:
-        stmt = sqlalchemy.text("SELECT AristName FROM Artist a NATURAL JOIN Track tr JOIN TrackProperties tp ON (tr.TrackId = tp.TrackId) WHERE Danceability BETWEEN :danceProp - 10 AND :danceProp + 10 AND Energy BETWEEN :energyProp - 10 AND :energyProp + 10 AND Loudness BETWEEN :loudProp - 10 AND :loudProp + 10 AND Speechiness BETWEEN :speechProp - 10 AND :speechProp + 10 AND Acousticness BETWEEN :acoustProp - 10 AND :acoustProp + 10 AND Instrumentalness BETWEEN :instruProp - 10 AND :instruProp + 10 AND Liveness BETWEEN :liveProp - 10 AND :liveProp + 10 AND Valence BETWEEN :valProp - 10 AND :valProp + 10 AND Tempo BETWEEN :tempoProp - 10 AND :tempoProp + 10 GROUP BY a.ArtistId LIMIT 15")
+        stmt = sqlalchemy.text("SELECT ArtistName FROM Artist ar JOIN Album al ON (ar.ArtistId=al.ArtistId) JOIN Track tr ON (al.AlbumId=tr.AlbumId) JOIN TrackProperties tp ON (tr.TrackId=tp.TrackId) WHERE Danceability BETWEEN :danceProp - 10 AND :danceProp + 10 AND Energy BETWEEN :energyProp - 10 AND :energyProp + 10 AND Loudness BETWEEN :loudProp - 10 AND :loudProp + 10 AND Speechiness BETWEEN :speechProp - 10 AND :speechProp + 10 AND Acousticness BETWEEN :acoustProp - 10 AND :acoustProp + 10 AND Instrumentalness BETWEEN :instruProp - 10 AND :instruProp + 10 AND Liveness BETWEEN :liveProp - 10 AND :liveProp + 10 AND Valence BETWEEN :valProp - 10 AND :valProp + 10 AND Tempo BETWEEN :tempoProp - 10 AND :tempoProp + 10 GROUP BY ar.ArtistId LIMIT 15")
         with db.connect() as conn:
             output = conn.execute(stmt, danceProp=avgTrackProperties[0][0], energyProp=avgTrackProperties[1][0], loudProp=avgTrackProperties[2][0], speechProp=avgTrackProperties[3][0], acoustProp=avgTrackProperties[4][0], instruProp=avgTrackProperties[5][0], liveProp=avgTrackProperties[6][0], valProp=avgTrackProperties[7][0], tempoProp=avgTrackProperties[8][0]).first()
     except Exception as e:
         print(e)
 
-    return output['ArtistName']
+    return dict(output)
 
 @app.route("/api/recommend/album")
 @flask_praetorian.auth_required
 def recommend_album():
-    req = request.get_json(force=True)
-    username = req.get("username", None)
+    username = flask_praetorian.current_user().identity
 
     result = None
     try:
@@ -393,12 +394,15 @@ def recommend_album():
     except Exception as e:
         print(e)
     
+    if not result:
+        return 'No Liked Albums', 690
+
     # loop through all liked songs to find average of all track properties
     avgTrackProperties = [[0, 0, 'Danceability'],[0, 0, 'Energy'],[0, 0, 'Loudness'],[0, 0, 'Speechiness'],[0, 0, 'Acousticness'],[0, 0, 'Instrumentalness'],[0, 0, 'Liveness'],[0, 0, 'Valence'],[0, 0, 'Tempo']]
-    for albumId in result['AlbumId']:
+    for albumId in result:
         albumTracks = None
         try:
-            stmt = sqlalchemy.text("SELECT TrackProperties FROM Album a NATURAL JOIN Track tr JOIN TrackProperties tp ON (tr.TrackId = tp.TrackId) WHERE AlbumId = :albumIdToCheck")
+            stmt = sqlalchemy.text("SELECT tp.* FROM Album a JOIN Track tr ON (a.AlbumId=tr.AlbumId) JOIN TrackProperties tp ON (tr.TrackId=tp.TrackId) WHERE a.AlbumId = :albumIdToCheck")
             with db.connect() as conn:
                 albumTracks = conn.execute(stmt, albumIdToCheck=albumId).first()
         except Exception as e:
@@ -406,25 +410,24 @@ def recommend_album():
         
         # Update avgTrackProperties with data of current track
         for i in range(len(avgTrackProperties)):
-            avgTrackProperties[i][0] = (avgTrackProperties[i][0] * avgTrackProperties[i][1] + albumTracks[avgTrackProperties[2]]) / (1 + avgTrackProperties[i][1])
+            avgTrackProperties[i][0] = (avgTrackProperties[i][0] * avgTrackProperties[i][1] + albumTracks[avgTrackProperties[i][2]]) / (1 + avgTrackProperties[i][1])
             avgTrackProperties[i][1] += 1
     
     # Find similar songs based on avg track properties liked with a range of +- 10 (LIMIT 15)
     output = None
     try:
-        stmt = sqlalchemy.text("SELECT AlbumName FROM Album a NATURAL JOIN Track tr JOIN TrackProperties tp ON (tr.TrackId = tp.TrackId) WHERE Danceability BETWEEN :danceProp - 10 AND :danceProp + 10 AND Energy BETWEEN :energyProp - 10 AND :energyProp + 10 AND Loudness BETWEEN :loudProp - 10 AND :loudProp + 10 AND Speechiness BETWEEN :speechProp - 10 AND :speechProp + 10 AND Acousticness BETWEEN :acoustProp - 10 AND :acoustProp + 10 AND Instrumentalness BETWEEN :instruProp - 10 AND :instruProp + 10 AND Liveness BETWEEN :liveProp - 10 AND :liveProp + 10 AND Valence BETWEEN :valProp - 10 AND :valProp + 10 AND Tempo BETWEEN :tempoProp - 10 AND :tempoProp + 10 GROUP BY AlbumId LIMIT 15")
+        stmt = sqlalchemy.text("SELECT a.AlbumName FROM Album a JOIN Track tr ON (a.AlbumId=tr.AlbumId) JOIN TrackProperties tp ON (tr.TrackId = tp.TrackId) WHERE Danceability BETWEEN :danceProp - 10 AND :danceProp + 10 AND Energy BETWEEN :energyProp - 10 AND :energyProp + 10 AND Loudness BETWEEN :loudProp - 10 AND :loudProp + 10 AND Speechiness BETWEEN :speechProp - 10 AND :speechProp + 10 AND Acousticness BETWEEN :acoustProp - 10 AND :acoustProp + 10 AND Instrumentalness BETWEEN :instruProp - 10 AND :instruProp + 10 AND Liveness BETWEEN :liveProp - 10 AND :liveProp + 10 AND Valence BETWEEN :valProp - 10 AND :valProp + 10 AND Tempo BETWEEN :tempoProp - 10 AND :tempoProp + 10 GROUP BY a.AlbumId LIMIT 15")
         with db.connect() as conn:
             output = conn.execute(stmt, danceProp=avgTrackProperties[0][0], energyProp=avgTrackProperties[1][0], loudProp=avgTrackProperties[2][0], speechProp=avgTrackProperties[3][0], acoustProp=avgTrackProperties[4][0], instruProp=avgTrackProperties[5][0], liveProp=avgTrackProperties[6][0], valProp=avgTrackProperties[7][0], tempoProp=avgTrackProperties[8][0]).first()
     except Exception as e:
         print(e)
 
-    return output['AlbumName']
+    return dict(output)
 
 @app.route("/api/recommend/track")
 @flask_praetorian.auth_required
 def recommend_track():
-    req = request.get_json(force=True)
-    username = req.get("username", None)
+    username = flask_praetorian.current_user().identity
 
     result = None
     try:
@@ -433,10 +436,13 @@ def recommend_track():
             result = conn.execute(stmt, usernameToCheck=username).first()
     except Exception as e:
         print(e)
+
+    if not result:
+        return 'No Liked Tracks', 690
     
     # loop through all liked songs to find average of all track properties
     avgTrackProperties = [[0, 0, 'Danceability'],[0, 0, 'Energy'],[0, 0, 'Loudness'],[0, 0, 'Speechiness'],[0, 0, 'Acousticness'],[0, 0, 'Instrumentalness'],[0, 0, 'Liveness'],[0, 0, 'Valence'],[0, 0, 'Tempo']]
-    for trackId in result['TrackId']:
+    for trackId in result:
         output = None
         try:
             stmt = sqlalchemy.text("SELECT * FROM TrackProperties WHERE TrackId = :trackIdToCheck")
@@ -446,7 +452,7 @@ def recommend_track():
             print(e)
         # Update avgTrackProperties with data of current track
         for i in range(len(avgTrackProperties)):
-            avgTrackProperties[i][0] = (avgTrackProperties[i][0] * avgTrackProperties[i][1] + output[avgTrackProperties[2]]) / (1 + avgTrackProperties[i][1])
+            avgTrackProperties[i][0] = (avgTrackProperties[i][0] * avgTrackProperties[i][1] + output[avgTrackProperties[i][2]]) / (1 + avgTrackProperties[i][1])
             avgTrackProperties[i][1] += 1
     
     # Find similar songs based on avg track properties liked with a range of +- 10 (LIMIT 15)
