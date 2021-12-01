@@ -86,7 +86,15 @@ REPEAT
 END REPEAT;
 CLOSE trackCur;
 
-SELECT vDanceability = Danceability / vCount, vEnergy = Energy / vCount, vLoudness = Loudness / vCount, vSpeechiness = Speechiness / vCount, vAcousticness = Acousticness / vCount, vInstrumentalness = Instrumentalness / vCount, vLiveness = Liveness / vCount, vValence = Valence / vCount, vTempo = Tempo / vCount FROM NewTable;
+SELECT Danceability / vCount INTO vDanceability FROM NewTable;
+SELECT Energy / vCount INTO vEnergy FROM NewTable;
+SELECT Loudness / vCount INTO vLoudness FROM NewTable;
+SELECT Speechiness / vCount INTO vSpeechiness FROM NewTable;
+SELECT Acousticness / vCount INTO vAcousticness FROM NewTable;
+SELECT Instrumentalness / vCount INTO vInstrumentalness FROM NewTable;
+SELECT Liveness / vCount INTO vLiveness FROM NewTable;
+SELECT Valence / vCount INTO vValence FROM NewTable;
+SELECT Tempo / vCount INTO vTempo FROM NewTable;
 
 IF type = "Artist" THEN
     SELECT a.ArtistId, a.ArtistName, a.ImageURL, a.Genre, a.Popularity

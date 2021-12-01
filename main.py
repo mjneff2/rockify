@@ -308,7 +308,7 @@ def search_album():
     ids = set()
     with db.connect() as conn:
         for word in keywords.split(' '):
-            stmt = sqlalchemy.text("SELECT a.AlbumId, AlbumName, ArtistId, Genre, ImageUrl, Likes, Popularity, ReleaseDate FROM Album a LEFT JOIN AlbumLikes al ON a.AlbumId = al.AlbumId AND al.Username = :user WHERE LOWER(a.AlbumName) LIKE :lowerword LIMIT 20")
+            stmt = sqlalchemy.text("SELECT a.AlbumId, a.AlbumName, art.ArtistName, a.ArtistId, a.Genre, a.ImageUrl, Likes, a.Popularity, a.ReleaseDate FROM Album a LEFT JOIN AlbumLikes al ON a.AlbumId = al.AlbumId AND al.Username = :user JOIN Artist art ON a.ArtistId = art.ArtistId WHERE LOWER(a.AlbumName) LIKE :lowerword LIMIT 20")
             result = conn.execute(stmt, user=username, lowerword="%"+word.lower()+"%").all()
             for row in result:
                 asdict = dict(row)
@@ -327,7 +327,7 @@ def search_track():
     ids = set()
     with db.connect() as conn:
         for word in keywords.split(' '):
-            stmt = sqlalchemy.text("SELECT a.TrackId, TrackName, AlbumId, Duration, Genre, ImageURL, Likes, Popularity, ReleaseDate FROM Track a LEFT JOIN TrackLikes al ON a.TrackId = al.TrackId AND al.Username = :user WHERE LOWER(a.TrackName) LIKE :lowerword LIMIT 20")
+            stmt = sqlalchemy.text("SELECT a.TrackId, a.TrackName, ArtistName, AlbumName, a.AlbumId, a.Duration, a.Genre, a.ImageURL, Likes, a.Popularity, a.ReleaseDate FROM Track a LEFT JOIN TrackLikes al ON a.TrackId = al.TrackId AND al.Username = :user JOIN Album alb ON a.AlbumId = alb.AlbumId JOIN Artist art ON alb.ArtistId = art.ArtistId WHERE LOWER(a.TrackName) LIKE :lowerword LIMIT 20")
             result = conn.execute(stmt, user=username, lowerword="%"+word.lower()+"%").all()
             for row in result:
                 asdict = dict(row)
@@ -341,131 +341,48 @@ def search_track():
 @flask_praetorian.auth_required
 def recommend_artist():
     username = flask_praetorian.current_user().identity
-
-    result = None
-    try:
-        stmt = sqlalchemy.text("SELECT ArtistId FROM ArtistLikes WHERE Username = :usernameToCheck")
-        with db.connect() as conn:
-            result = conn.execute(stmt, usernameToCheck=username).first()
-    except Exception as e:
-        print(e)
-    
-    if not result:
-        return 'No Liked Artist', 690
-
-    # loop through all liked songs to find average of all track properties
-    avgTrackProperties = [[0, 0, 'Danceability'],[0, 0, 'Energy'],[0, 0, 'Loudness'],[0, 0, 'Speechiness'],[0, 0, 'Acousticness'],[0, 0, 'Instrumentalness'],[0, 0, 'Liveness'],[0, 0, 'Valence'],[0, 0, 'Tempo']]
-    for artistId in result:
-        ArtistTracks = None
-        try:
-            stmt = sqlalchemy.text("SELECT tp.* FROM Artist ar JOIN Album al ON (ar.ArtistId=al.ArtistId) JOIN Track tr ON (al.AlbumId=tr.AlbumId) JOIN TrackProperties tp ON (tr.TrackId=tp.TrackId) WHERE ar.ArtistId = :artistIdToCheck")
-            with db.connect() as conn:
-                ArtistTracks = conn.execute(stmt, artistIdToCheck=artistId).first()
-        except Exception as e:
-            print(e)
-        
-        # Update avgTrackProperties with data of current track
-        for i in range(len(avgTrackProperties)):
-            avgTrackProperties[i][0] = (avgTrackProperties[i][0] * avgTrackProperties[i][1] + ArtistTracks[avgTrackProperties[i][2]]) / (1 + avgTrackProperties[i][1])
-            avgTrackProperties[i][1] += 1
-    
-    # Find similar songs based on avg track properties liked with a range of +- 10 (LIMIT 15)
-    output = None
-    try:
-        stmt = sqlalchemy.text("SELECT ArtistName FROM Artist ar JOIN Album al ON (ar.ArtistId=al.ArtistId) JOIN Track tr ON (al.AlbumId=tr.AlbumId) JOIN TrackProperties tp ON (tr.TrackId=tp.TrackId) WHERE Danceability BETWEEN :danceProp - 10 AND :danceProp + 10 AND Energy BETWEEN :energyProp - 10 AND :energyProp + 10 AND Loudness BETWEEN :loudProp - 10 AND :loudProp + 10 AND Speechiness BETWEEN :speechProp - 10 AND :speechProp + 10 AND Acousticness BETWEEN :acoustProp - 10 AND :acoustProp + 10 AND Instrumentalness BETWEEN :instruProp - 10 AND :instruProp + 10 AND Liveness BETWEEN :liveProp - 10 AND :liveProp + 10 AND Valence BETWEEN :valProp - 10 AND :valProp + 10 AND Tempo BETWEEN :tempoProp - 10 AND :tempoProp + 10 GROUP BY ar.ArtistId LIMIT 15")
-        with db.connect() as conn:
-            output = conn.execute(stmt, danceProp=avgTrackProperties[0][0], energyProp=avgTrackProperties[1][0], loudProp=avgTrackProperties[2][0], speechProp=avgTrackProperties[3][0], acoustProp=avgTrackProperties[4][0], instruProp=avgTrackProperties[5][0], liveProp=avgTrackProperties[6][0], valProp=avgTrackProperties[7][0], tempoProp=avgTrackProperties[8][0]).first()
-    except Exception as e:
-        print(e)
-
-    return dict(output)
+    results = []
+    with db.connect() as conn:
+        stmt = sqlalchemy.text("CALL MakeLikedTracks(:type, :user)")
+        conn.execute(stmt, type="Artist", user=username)
+        stmt = sqlalchemy.text("CALL Recommend(:type, :user)")
+        result = conn.execute(stmt, type="Artist", user=username)
+        for row in result:
+                asdict = dict(row)
+                results.append(asdict)
+    return (jsonify(results), 200)
+            
 
 @app.route("/api/recommend/album")
 @flask_praetorian.auth_required
 def recommend_album():
     username = flask_praetorian.current_user().identity
-
-    result = None
-    try:
-        stmt = sqlalchemy.text("SELECT AlbumId FROM AlbumLikes WHERE Username = :usernameToCheck")
-        with db.connect() as conn:
-            result = conn.execute(stmt, usernameToCheck=username).first()
-    except Exception as e:
-        print(e)
-    
-    if not result:
-        return 'No Liked Albums', 690
-
-    # loop through all liked songs to find average of all track properties
-    avgTrackProperties = [[0, 0, 'Danceability'],[0, 0, 'Energy'],[0, 0, 'Loudness'],[0, 0, 'Speechiness'],[0, 0, 'Acousticness'],[0, 0, 'Instrumentalness'],[0, 0, 'Liveness'],[0, 0, 'Valence'],[0, 0, 'Tempo']]
-    for albumId in result:
-        albumTracks = None
-        try:
-            stmt = sqlalchemy.text("SELECT tp.* FROM Album a JOIN Track tr ON (a.AlbumId=tr.AlbumId) JOIN TrackProperties tp ON (tr.TrackId=tp.TrackId) WHERE a.AlbumId = :albumIdToCheck")
-            with db.connect() as conn:
-                albumTracks = conn.execute(stmt, albumIdToCheck=albumId).first()
-        except Exception as e:
-            print(e)
-        
-        # Update avgTrackProperties with data of current track
-        for i in range(len(avgTrackProperties)):
-            avgTrackProperties[i][0] = (avgTrackProperties[i][0] * avgTrackProperties[i][1] + albumTracks[avgTrackProperties[i][2]]) / (1 + avgTrackProperties[i][1])
-            avgTrackProperties[i][1] += 1
-    
-    # Find similar songs based on avg track properties liked with a range of +- 10 (LIMIT 15)
-    output = None
-    try:
-        stmt = sqlalchemy.text("SELECT a.AlbumName FROM Album a JOIN Track tr ON (a.AlbumId=tr.AlbumId) JOIN TrackProperties tp ON (tr.TrackId = tp.TrackId) WHERE Danceability BETWEEN :danceProp - 10 AND :danceProp + 10 AND Energy BETWEEN :energyProp - 10 AND :energyProp + 10 AND Loudness BETWEEN :loudProp - 10 AND :loudProp + 10 AND Speechiness BETWEEN :speechProp - 10 AND :speechProp + 10 AND Acousticness BETWEEN :acoustProp - 10 AND :acoustProp + 10 AND Instrumentalness BETWEEN :instruProp - 10 AND :instruProp + 10 AND Liveness BETWEEN :liveProp - 10 AND :liveProp + 10 AND Valence BETWEEN :valProp - 10 AND :valProp + 10 AND Tempo BETWEEN :tempoProp - 10 AND :tempoProp + 10 GROUP BY a.AlbumId LIMIT 15")
-        with db.connect() as conn:
-            output = conn.execute(stmt, danceProp=avgTrackProperties[0][0], energyProp=avgTrackProperties[1][0], loudProp=avgTrackProperties[2][0], speechProp=avgTrackProperties[3][0], acoustProp=avgTrackProperties[4][0], instruProp=avgTrackProperties[5][0], liveProp=avgTrackProperties[6][0], valProp=avgTrackProperties[7][0], tempoProp=avgTrackProperties[8][0]).first()
-    except Exception as e:
-        print(e)
-
-    return dict(output)
+    results = []
+    with db.connect() as conn:
+        stmt = sqlalchemy.text("CALL MakeLikedTracks(:type, :user)")
+        conn.execute(stmt, type="Album", user=username)
+        stmt = sqlalchemy.text("CALL Recommend(:type, :user)")
+        result = conn.execute(stmt, type="Album", user=username)
+        for row in result:
+                asdict = dict(row)
+                results.append(asdict)
+    return (jsonify(results), 200)
 
 @app.route("/api/recommend/track")
 @flask_praetorian.auth_required
 def recommend_track():
     username = flask_praetorian.current_user().identity
-
-    result = None
-    try:
-        stmt = sqlalchemy.text("SELECT TrackId FROM TrackLikes WHERE Username = :usernameToCheck")
-        with db.connect() as conn:
-            result = conn.execute(stmt, usernameToCheck=username).first()
-    except Exception as e:
-        print(e)
-
-    if not result:
-        return 'No Liked Tracks', 690
-    
-    # loop through all liked songs to find average of all track properties
-    avgTrackProperties = [[0, 0, 'Danceability'],[0, 0, 'Energy'],[0, 0, 'Loudness'],[0, 0, 'Speechiness'],[0, 0, 'Acousticness'],[0, 0, 'Instrumentalness'],[0, 0, 'Liveness'],[0, 0, 'Valence'],[0, 0, 'Tempo']]
-    for trackId in result:
-        output = None
-        try:
-            stmt = sqlalchemy.text("SELECT * FROM TrackProperties WHERE TrackId = :trackIdToCheck")
-            with db.connect() as conn:
-                output = conn.execute(stmt, trackIdToCheck=trackId).first()
-        except Exception as e:
-            print(e)
-        # Update avgTrackProperties with data of current track
-        for i in range(len(avgTrackProperties)):
-            avgTrackProperties[i][0] = (avgTrackProperties[i][0] * avgTrackProperties[i][1] + output[avgTrackProperties[i][2]]) / (1 + avgTrackProperties[i][1])
-            avgTrackProperties[i][1] += 1
-    
-    # Find similar songs based on avg track properties liked with a range of +- 10 (LIMIT 15)
-    output = None
-    try:
-        stmt = sqlalchemy.text("SELECT TrackName FROM Track NATURAL JOIN TrackProperties WHERE Danceability BETWEEN :danceProp - 10 AND :danceProp + 10 AND Energy BETWEEN :energyProp - 10 AND :energyProp + 10 AND Loudness BETWEEN :loudProp - 10 AND :loudProp + 10 AND Speechiness BETWEEN :speechProp - 10 AND :speechProp + 10 AND Acousticness BETWEEN :acoustProp - 10 AND :acoustProp + 10 AND Instrumentalness BETWEEN :instruProp - 10 AND :instruProp + 10 AND Liveness BETWEEN :liveProp - 10 AND :liveProp + 10 AND Valence BETWEEN :valProp - 10 AND :valProp + 10 AND Tempo BETWEEN :tempoProp - 10 AND :tempoProp + 10 LIMIT 15")
-        with db.connect() as conn:
-            output = conn.execute(stmt, danceProp=avgTrackProperties[0][0], energyProp=avgTrackProperties[1][0], loudProp=avgTrackProperties[2][0], speechProp=avgTrackProperties[3][0], acoustProp=avgTrackProperties[4][0], instruProp=avgTrackProperties[5][0], liveProp=avgTrackProperties[6][0], valProp=avgTrackProperties[7][0], tempoProp=avgTrackProperties[8][0]).first()
-    except Exception as e:
-        print(e)
-
-    return output['TrackName']
-
-
+    results = []
+    with db.connect() as conn:
+        stmt = sqlalchemy.text("CALL MakeLikedTracks('Artist', :user)")
+        conn.execute(stmt, type="Track", user=username)
+        stmt = sqlalchemy.text("CALL Recommend(:type, :user)")
+        result = conn.execute(stmt, type="Track", user=username)
+        for row in result:
+                print(row)
+                asdict = dict(row)
+                results.append(asdict)
+    return (jsonify(results), 200)
 
 @app.route("/api/interact/artist", methods=['GET', 'POST'])
 @flask_praetorian.auth_required
