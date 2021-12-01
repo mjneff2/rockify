@@ -289,7 +289,7 @@ def search_artist():
     ids = set()
     with db.connect() as conn:
         for word in keywords.split(' '):
-            stmt = sqlalchemy.text("SELECT a.ArtistId, ArtistName, ImageUrl, Genre, Popularity, Likes FROM Artist a LEFT JOIN ArtistLikes al ON a.ArtistId = al.ArtistId AND al.Username = :user WHERE LOWER(a.ArtistName) LIKE :lowerword")
+            stmt = sqlalchemy.text("SELECT a.ArtistId, ArtistName, ImageUrl, Genre, Popularity, Likes FROM Artist a LEFT JOIN ArtistLikes al ON a.ArtistId = al.ArtistId AND al.Username = :user WHERE LOWER(a.ArtistName) LIKE :lowerword LIMIT 20")
             result = conn.execute(stmt, user=username, lowerword="%"+word.lower()+"%").all()
             for row in result:
                 asdict = dict(row)
@@ -308,7 +308,7 @@ def search_album():
     ids = set()
     with db.connect() as conn:
         for word in keywords.split(' '):
-            stmt = sqlalchemy.text("SELECT a.AlbumId, AlbumName, ArtistId, Genre, ImageUrl, Likes, Popularity, ReleaseDate FROM Album a LEFT JOIN AlbumLikes al ON a.AlbumId = al.AlbumId AND al.Username = :user WHERE LOWER(a.AlbumName) LIKE :lowerword")
+            stmt = sqlalchemy.text("SELECT a.AlbumId, AlbumName, ArtistId, Genre, ImageUrl, Likes, Popularity, ReleaseDate FROM Album a LEFT JOIN AlbumLikes al ON a.AlbumId = al.AlbumId AND al.Username = :user WHERE LOWER(a.AlbumName) LIKE :lowerword LIMIT 20")
             result = conn.execute(stmt, user=username, lowerword="%"+word.lower()+"%").all()
             for row in result:
                 asdict = dict(row)
@@ -327,7 +327,7 @@ def search_track():
     ids = set()
     with db.connect() as conn:
         for word in keywords.split(' '):
-            stmt = sqlalchemy.text("SELECT a.TrackId, TrackName, AlbumId, Duration, Genre, ImageURL, Likes, Popularity, ReleaseDate FROM Track a LEFT JOIN TrackLikes al ON a.TrackId = al.TrackId AND al.Username = :user WHERE LOWER(a.TrackName) LIKE :lowerword")
+            stmt = sqlalchemy.text("SELECT a.TrackId, TrackName, AlbumId, Duration, Genre, ImageURL, Likes, Popularity, ReleaseDate FROM Track a LEFT JOIN TrackLikes al ON a.TrackId = al.TrackId AND al.Username = :user WHERE LOWER(a.TrackName) LIKE :lowerword LIMIT 20")
             result = conn.execute(stmt, user=username, lowerword="%"+word.lower()+"%").all()
             for row in result:
                 asdict = dict(row)
