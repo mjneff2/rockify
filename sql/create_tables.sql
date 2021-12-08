@@ -4,6 +4,7 @@ ArtistName VARCHAR(255),
 ImageUrl VARCHAR(255), 
 Genre VARCHAR(255), 
 Popularity INT,
+Interactions INT,
 PRIMARY KEY(ArtistId)
 );
 
@@ -15,6 +16,7 @@ Genre VARCHAR(255),
 Popularity INT, 
 ReleaseDate DATE,
 ArtistId VARCHAR(255),
+Interactions INT,
 PRIMARY KEY (AlbumId),
 FOREIGN KEY (ArtistId) REFERENCES Artist(ArtistId) ON DELETE CASCADE
 );
@@ -29,6 +31,7 @@ PreviewURL VARCHAR(255),
 ReleaseDate DATE, 
 Duration INT,
 AlbumId VARCHAR(255),
+Interactions INT,
 PRIMARY KEY (TrackId),
 FOREIGN KEY (AlbumId) REFERENCES Album(AlbumId) ON DELETE CASCADE,
 FOREIGN KEY (ArtistId) REFERENCES Artist(ArtistId) ON DELETE CASCADE
