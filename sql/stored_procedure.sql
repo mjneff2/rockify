@@ -22,17 +22,17 @@ PRIMARY KEY(TrackId)
 IF type = "Track" THEN
     INSERT IGNORE INTO LikedTracks 
     (SELECT TrackId, Danceability, Energy, Loudness, Speechiness, Acousticness, Instrumentalness, Liveness, Valence, Tempo, Likes
-    FROM TrackLikes tl NATURAL JOIN Track t NATURAL JOIN TrackProperties tp WHERE Username = 'mikey22n');
+    FROM TrackLikes tl NATURAL JOIN Track t NATURAL JOIN TrackProperties tp WHERE Username = identity);
 END IF;
 IF type = "Album" THEN
     INSERT IGNORE INTO LikedTracks 
     (SELECT TrackId, Danceability, Energy, Loudness, Speechiness, Acousticness, Instrumentalness, Liveness, Valence, Tempo, Likes
-    FROM AlbumLikes al NATURAL JOIN Album a JOIN Track t ON a.AlbumId = t.AlbumId NATURAL JOIN TrackProperties tp WHERE Username = 'mikey22n');
+    FROM AlbumLikes al NATURAL JOIN Album a JOIN Track t ON a.AlbumId = t.AlbumId NATURAL JOIN TrackProperties tp WHERE Username = identity);
 END IF;
 IF type = "Artist" THEN
     INSERT IGNORE INTO LikedTracks 
     (SELECT TrackId, Danceability, Energy, Loudness, Speechiness, Acousticness, Instrumentalness, Liveness, Valence, Tempo, Likes 
-    FROM ArtistLikes al NATURAL JOIN Artist a JOIN Album alb ON a.ArtistId = alb.ArtistId JOIN Track t ON alb.AlbumId = t.AlbumId NATURAL JOIN TrackProperties tp WHERE Username = 'mikey22n');
+    FROM ArtistLikes al NATURAL JOIN Artist a JOIN Album alb ON a.ArtistId = alb.ArtistId JOIN Track t ON alb.AlbumId = t.AlbumId NATURAL JOIN TrackProperties tp WHERE Username = identity);
 END IF;
 
 END;
